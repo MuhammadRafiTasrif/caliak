@@ -13,7 +13,8 @@ export default function AuthShell({ judul, keterangan, children }) {
             Permintaan dan mutasi Barang Milik Negara, tercatat di satu tempat.
           </h2>
           <p className="mt-4 text-primer-100">
-            Ajukan permintaan barang, pantau persetujuannya, dan lihat ketersediaan stok kapan saja.
+            Barang baru berkurang dari stok saat diserahkan, dan setiap perubahan dicatat bersama saldo sebelum dan
+            sesudahnya.
           </p>
         </div>
         <p className="flex items-center gap-2 text-sm text-primer-200">
@@ -28,7 +29,7 @@ export default function AuthShell({ judul, keterangan, children }) {
             <Brand />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">{judul}</h1>
-          {keterangan && <p className="mt-1 text-sm text-slate-500">{keterangan}</p>}
+          {keterangan && <p className="mt-1 text-sm text-slate-600">{keterangan}</p>}
           <div className="mt-6">{children}</div>
         </div>
       </section>

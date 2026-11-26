@@ -16,7 +16,7 @@ export default function Brand({ terang = false, tagline = true }) {
           CALIAK
         </p>
         {tagline && (
-          <p className={`text-[11px] leading-snug ${terang ? 'text-primer-100' : 'text-slate-500'}`}>
+          <p className={`text-[11px] leading-snug ${terang ? 'text-primer-100' : 'text-slate-600'}`}>
             Catatan Logistik Akurat dan Informasi Ketersediaan
           </p>
         )}

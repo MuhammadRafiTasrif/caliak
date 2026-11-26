@@ -5,18 +5,28 @@
 /*
   Kelas yang dipakai berulang di banyak halaman. Ubah di sini saja bila
   ingin mengganti tampilan semua tombol, input, atau kartu sekaligus.
+  Alasan setiap pilihan visual ada di DESIGN.md.
 */
 @layer base {
   body {
     @apply bg-slate-100 text-slate-800 antialiased;
   }
+
+  /* Garis fokus untuk pengguna keyboard. Di area biru tua (sidebar, header)
+     warnanya putih supaya tetap terlihat. Tandai area itu dengan data-gelap. */
+  :focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-primer-600;
+  }
+  [data-gelap] :focus-visible {
+    @apply outline-white;
+  }
 }
 
 @layer components {
+  /* min-h-11 = 44px, ukuran minimal agar mudah disentuh jari di HP. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
-      transition-colors disabled:cursor-not-allowed disabled:opacity-60
-      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primer-500;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold
+      transition-colors disabled:cursor-not-allowed disabled:opacity-60;
   }
   .btn-primer {
     @apply btn bg-primer-700 text-white hover:bg-primer-800;
@@ -25,28 +35,29 @@
     @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
   }
   .btn-bahaya {
-    @apply btn bg-red-600 text-white hover:bg-red-700;
+    @apply btn bg-red-700 text-white hover:bg-red-800;
   }
   .btn-sukses {
-    @apply btn bg-emerald-600 text-white hover:bg-emerald-700;
+    @apply btn bg-emerald-700 text-white hover:bg-emerald-800;
   }
 
   .label {
     @apply mb-1.5 block text-sm font-medium text-slate-700;
   }
+  /* Saat fokus, input mendapat garis biru tua 2px (border + ring 1px). */
   .input {
-    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800
-      placeholder:text-slate-400 focus:border-primer-500 focus:outline-none focus:ring-2 focus:ring-primer-100
+    @apply block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800
+      placeholder:text-slate-500 focus:border-primer-600 focus:outline-none focus:ring-1 focus:ring-primer-600
       disabled:bg-slate-100;
   }
   .input-error {
-    @apply border-red-400 focus:border-red-500 focus:ring-red-100;
+    @apply border-red-600 focus:border-red-700 focus:ring-red-700;
   }
   .teks-error {
-    @apply mt-1 text-xs text-red-600;
+    @apply mt-1 text-xs text-red-700;
   }
 
   .kartu {
-    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+    @apply rounded-xl border border-slate-200 bg-white;
   }
 }

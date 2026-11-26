@@ -1,9 +1,10 @@
 import { Loader2 } from 'lucide-react'
 
-export default function Loading({ teks = 'Memuat data...', layarPenuh = false }) {
+// Selalu isi `teks` dengan apa yang sedang dimuat, misalnya "Memuat daftar barang...".
+export default function Loading({ teks = 'Memeriksa sesi login...', layarPenuh = false }) {
   return (
     <div
-      className={`flex items-center justify-center gap-2 text-sm text-slate-500 ${
+      className={`flex items-center justify-center gap-2 text-sm text-slate-600 ${
         layarPenuh ? 'min-h-screen' : 'py-16'
       }`}
       role="status"

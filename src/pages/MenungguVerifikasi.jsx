@@ -33,11 +33,11 @@ export default function MenungguVerifikasi() {
             </p>
           </div>
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-slate-100 pt-4 text-sm">
-            <dt className="text-slate-500">Nama</dt>
+            <dt className="text-slate-600">Nama</dt>
             <dd className="font-medium text-slate-800">{profile?.nama}</dd>
-            <dt className="text-slate-500">NIP</dt>
+            <dt className="text-slate-600">NIP</dt>
             <dd className="font-medium text-slate-800">{profile?.nip || '-'}</dd>
-            <dt className="text-slate-500">Unit kerja</dt>
+            <dt className="text-slate-600">Unit kerja</dt>
             <dd className="font-medium text-slate-800">{profile?.unit_kerja || '-'}</dd>
           </dl>
         </div>

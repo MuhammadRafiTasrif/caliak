@@ -1,4 +1,3 @@
--- =====================================================================
 -- CALIAK: fungsi RPC untuk logika stok dan status permintaan.
 -- Jalankan setelah schema.sql.
 --
@@ -10,11 +9,8 @@
 -- Fungsi memakai SECURITY DEFINER agar bisa menulis ke tabel yang
 -- tertutup untuk pengguna biasa. Karena itu setiap fungsi WAJIB
 -- memeriksa siapa pemanggilnya (auth.uid()) sebelum mengubah data.
--- =====================================================================
 
--- ---------------------------------------------------------------------
 -- Pembantu hak akses. Juga dipakai di policies.sql.
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -55,10 +51,8 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------------
 -- Barang masuk: stok bertambah dan tercatat sebagai mutasi 'masuk'.
 -- Juga dipakai untuk mencatat stok awal barang baru.
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION tambah_barang_masuk(
     p_item_id        UUID,
     p_jumlah         INTEGER,
@@ -110,9 +104,7 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------------
 -- Koreksi stok (misalnya setelah stock opname). Alasan wajib diisi.
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION koreksi_stok(
     p_item_id   UUID,
     p_stok_baru INTEGER,
@@ -155,10 +147,8 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------------
 -- Pemohon membuat permintaan.
 -- p_items berbentuk: [{"item_id": "...", "jumlah": 2}, ...]
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION buat_permintaan(
     p_keperluan          TEXT,
     p_tanggal_dibutuhkan DATE,
@@ -228,9 +218,7 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------------
 -- Pemohon membatalkan permintaannya sendiri, hanya saat masih 'menunggu'.
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION batalkan_permintaan(
     p_request_id UUID,
     p_catatan    TEXT DEFAULT NULL
@@ -263,7 +251,6 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------------
 -- Admin menyetujui atau menolak permintaan.
 --   p_status_baru: 'disetujui' atau 'ditolak'
 --   p_jumlah_disetujui (opsional, hanya untuk 'disetujui'):
@@ -271,7 +258,6 @@ $$;
 --     Barang yang tidak disebut disetujui sebesar jumlah yang diminta.
 -- Status 'selesai' lewat selesaikan_permintaan, 'dibatalkan' lewat
 -- batalkan_permintaan.
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION ubah_status_permintaan(
     p_request_id       UUID,
     p_status_baru      TEXT,
@@ -352,10 +338,8 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------------
 -- Admin menyerahkan barang. Di sinilah stok berkurang.
 -- Gagal seluruhnya (tidak ada yang berubah) bila salah satu stok kurang.
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION selesaikan_permintaan(
     p_request_id UUID,
     p_catatan    TEXT DEFAULT NULL
@@ -414,9 +398,7 @@ BEGIN
 END;
 $$;
 
--- ---------------------------------------------------------------------
 -- Hilangkan badge notifikasi setelah pemohon membuka "Permintaan Saya".
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION tandai_permintaan_dilihat()
 RETURNS VOID
 LANGUAGE sql
@@ -427,9 +409,7 @@ AS $$
     WHERE requester_id = auth.uid() AND ada_pembaruan;
 $$;
 
--- ---------------------------------------------------------------------
 -- Hak menjalankan fungsi: hanya pengguna yang sudah login.
--- ---------------------------------------------------------------------
 REVOKE EXECUTE ON FUNCTION
     is_admin(), is_verified_user(), wajib_admin(),
     tambah_barang_masuk(UUID, INTEGER, TEXT, TEXT, TEXT, DATE),

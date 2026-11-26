@@ -1,4 +1,3 @@
--- =====================================================================
 -- CALIAK: Row Level Security dan hak akses tabel.
 -- Jalankan setelah functions.sql (policy memakai is_admin()).
 --
@@ -8,7 +7,6 @@
 --   - Penulisan permintaan, status, dan stok hanya lewat fungsi RPC.
 --   - Riwayat (stock_movements, request_status_logs) tidak bisa
 --     diubah atau dihapus oleh siapa pun dari aplikasi.
--- =====================================================================
 
 ALTER TABLE profiles            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories          ENABLE ROW LEVEL SECURITY;
@@ -19,10 +17,8 @@ ALTER TABLE request_status_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE stock_movements     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE request_counters    ENABLE ROW LEVEL SECURITY;
 
--- ---------------------------------------------------------------------
 -- Hak dasar tabel. Supabase memberi semua hak ke anon dan authenticated
 -- secara bawaan, jadi dicabut dulu lalu diberikan seperlunya.
--- ---------------------------------------------------------------------
 REVOKE ALL ON profiles, categories, items, requests, request_items,
               request_status_logs, stock_movements, request_counters
 FROM anon, authenticated;
@@ -45,9 +41,7 @@ GRANT UPDATE (kode_unik, kode_bmn, nup, nama, category_id, satuan, stok_minimum,
               lokasi, deskripsi, foto_url, is_active)
     ON items TO authenticated;
 
--- ---------------------------------------------------------------------
 -- profiles
--- ---------------------------------------------------------------------
 CREATE POLICY "profil: baca milik sendiri atau admin"
     ON profiles FOR SELECT TO authenticated
     USING (id = auth.uid() OR is_admin());
@@ -59,9 +53,7 @@ CREATE POLICY "profil: hanya admin yang mengubah"
     USING (is_admin())
     WITH CHECK (is_admin());
 
--- ---------------------------------------------------------------------
 -- categories
--- ---------------------------------------------------------------------
 CREATE POLICY "kategori: semua pengguna login bisa membaca"
     ON categories FOR SELECT TO authenticated
     USING (true);
@@ -75,9 +67,7 @@ CREATE POLICY "kategori: admin mengubah"
     USING (is_admin())
     WITH CHECK (is_admin());
 
--- ---------------------------------------------------------------------
 -- items
--- ---------------------------------------------------------------------
 CREATE POLICY "barang: pemohon lihat yang aktif, admin lihat semua"
     ON items FOR SELECT TO authenticated
     USING (is_active OR is_admin());
@@ -93,11 +83,9 @@ CREATE POLICY "barang: admin mengubah"
 
 -- Tidak ada policy DELETE: barang dinonaktifkan, bukan dihapus.
 
--- ---------------------------------------------------------------------
 -- requests, request_items, request_status_logs
 -- Pembuatan dan perubahan lewat buat_permintaan(), batalkan_permintaan(),
 -- ubah_status_permintaan(), dan selesaikan_permintaan().
--- ---------------------------------------------------------------------
 CREATE POLICY "permintaan: pemohon lihat miliknya, admin lihat semua"
     ON requests FOR SELECT TO authenticated
     USING (requester_id = auth.uid() OR is_admin());
@@ -118,10 +106,8 @@ CREATE POLICY "log status: ikut hak baca permintaannya"
           AND (r.requester_id = auth.uid() OR is_admin())
     ));
 
--- ---------------------------------------------------------------------
 -- stock_movements: admin lihat semua, pemohon hanya mutasi keluar
 -- yang terkait permintaannya sendiri.
--- ---------------------------------------------------------------------
 CREATE POLICY "mutasi: admin semua, pemohon miliknya"
     ON stock_movements FOR SELECT TO authenticated
     USING (
@@ -135,13 +121,11 @@ CREATE POLICY "mutasi: admin semua, pemohon miliknya"
 
 -- request_counters tidak punya policy: hanya bisa diakses lewat fungsi.
 
--- ---------------------------------------------------------------------
 -- Storage: bucket "foto-barang"
 --   - foto barang disimpan di folder  barang/
 --   - foto bukti barang masuk di      bukti/
 -- Bucket publik agar foto tampil lewat URL biasa. Tulis hanya admin.
 -- Batas 2 MB dan tipe file juga dicek di sisi server.
--- ---------------------------------------------------------------------
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('foto-barang', 'foto-barang', true, 2097152,
         ARRAY['image/jpeg', 'image/png', 'image/webp'])

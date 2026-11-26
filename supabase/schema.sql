@@ -1,14 +1,10 @@
--- =====================================================================
 -- CALIAK: skema database
 -- Urutan menjalankan: schema.sql -> functions.sql -> policies.sql -> seed.sql
--- =====================================================================
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- ---------------------------------------------------------------------
 -- Profil pengguna. Satu baris per akun di auth.users, dibuat otomatis
 -- oleh trigger di bagian bawah file ini.
--- ---------------------------------------------------------------------
 CREATE TABLE profiles (
     id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     nip         TEXT UNIQUE,
@@ -24,10 +20,8 @@ CREATE TABLE categories (
     nama TEXT NOT NULL UNIQUE CHECK (length(trim(nama)) > 0)
 );
 
--- ---------------------------------------------------------------------
 -- Barang. Kolom stok hanya boleh diubah lewat fungsi di functions.sql.
 -- kode_bmn dan nup diisi bila barang punya kode BMN resmi.
--- ---------------------------------------------------------------------
 CREATE TABLE items (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     kode_unik    TEXT NOT NULL UNIQUE CHECK (length(trim(kode_unik)) > 0),
@@ -46,11 +40,9 @@ CREATE TABLE items (
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ---------------------------------------------------------------------
 -- Permintaan barang.
 -- ada_pembaruan = true bila admin mengubah status dan pemohon belum
 -- membuka halaman "Permintaan Saya". Dipakai untuk badge notifikasi.
--- ---------------------------------------------------------------------
 CREATE TABLE requests (
     id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nomor              TEXT NOT NULL UNIQUE,
@@ -85,11 +77,9 @@ CREATE TABLE request_status_logs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ---------------------------------------------------------------------
 -- Mutasi stok (append-only).
 -- jumlah bertanda: positif untuk masuk, negatif untuk keluar,
 -- dan bisa keduanya untuk koreksi.
--- ---------------------------------------------------------------------
 CREATE TABLE stock_movements (
     id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     item_id        UUID NOT NULL REFERENCES items(id) ON DELETE RESTRICT,
@@ -115,9 +105,7 @@ CREATE TABLE request_counters (
     terakhir INTEGER NOT NULL
 );
 
--- ---------------------------------------------------------------------
 -- Index untuk kolom yang sering difilter.
--- ---------------------------------------------------------------------
 CREATE INDEX items_category_idx          ON items (category_id);
 CREATE INDEX items_aktif_nama_idx        ON items (is_active, nama);
 CREATE INDEX requests_requester_idx      ON requests (requester_id, created_at DESC);
@@ -132,9 +120,7 @@ CREATE INDEX movements_jenis_idx         ON stock_movements (jenis);
 CREATE INDEX movements_request_idx       ON stock_movements (request_id);
 CREATE INDEX profiles_verified_idx       ON profiles (is_verified);
 
--- ---------------------------------------------------------------------
 -- updated_at otomatis
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -150,12 +136,10 @@ CREATE TRIGGER items_updated_at BEFORE UPDATE ON items
 CREATE TRIGGER requests_updated_at BEFORE UPDATE ON requests
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
--- ---------------------------------------------------------------------
 -- Buat baris profiles saat user baru mendaftar.
 -- Data NIP, nama, dan unit kerja dikirim dari form registrasi lewat
 -- options.data di supabase.auth.signUp. Role selalu 'pemohon' dan
 -- belum terverifikasi, apa pun isi metadata yang dikirim.
--- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER
 LANGUAGE plpgsql
