@@ -17,7 +17,9 @@ CREATE TABLE profiles (
 
 CREATE TABLE categories (
     id   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    nama TEXT NOT NULL UNIQUE CHECK (length(trim(nama)) > 0)
+    nama TEXT NOT NULL UNIQUE CHECK (length(trim(nama)) > 0),
+    -- Kode barang 10 digit SAKTI (misalnya 1010301001), diisi saat impor Excel.
+    kode TEXT UNIQUE
 );
 
 -- Barang. Kolom stok hanya boleh diubah lewat fungsi di functions.sql.

@@ -14,6 +14,7 @@ import BuatPermintaan from './pages/pemohon/BuatPermintaan'
 import PermintaanSaya from './pages/pemohon/PermintaanSaya'
 import Dashboard from './pages/admin/Dashboard'
 import KelolaBarang from './pages/admin/KelolaBarang'
+import ImporBarang from './pages/admin/ImporBarang'
 import BarangMasuk from './pages/admin/BarangMasuk'
 import Persetujuan from './pages/admin/Persetujuan'
 import Riwayat from './pages/admin/Riwayat'
@@ -43,6 +44,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/admin" element={<Dashboard />} />
             <Route path="/admin/barang" element={<KelolaBarang />} />
+            <Route path="/admin/barang/impor" element={<ImporBarang />} />
             <Route path="/admin/barang-masuk" element={<BarangMasuk />} />
             <Route path="/admin/persetujuan" element={<Persetujuan />} />
             <Route path="/admin/riwayat" element={<Riwayat />} />

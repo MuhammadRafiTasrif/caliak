@@ -20,9 +20,7 @@ export async function tambahKategori(nama) {
 }
 
 // status: 'aktif' | 'nonaktif' | 'semua'
-export async function ambilBarang({ cari = '', kategoriId = '', status = 'aktif', batas } = {}) {
-  let query = supabase.from('items').select(KOLOM_BARANG).order('nama')
-
+function saringBarang(query, { cari = '', kategoriId = '', status = 'aktif' }) {
   if (status === 'aktif') query = query.eq('is_active', true)
   if (status === 'nonaktif') query = query.eq('is_active', false)
   if (kategoriId) query = query.eq('category_id', kategoriId)
@@ -30,11 +28,52 @@ export async function ambilBarang({ cari = '', kategoriId = '', status = 'aktif'
   // Koma dan tanda kurung punya arti khusus di filter or() Supabase, jadi dibuang.
   const kata = cari.replace(/[,()%]/g, ' ').trim()
   if (kata) query = query.or(`nama.ilike.%${kata}%,kode_unik.ilike.%${kata}%`)
-  if (batas) query = query.limit(batas)
+  return query
+}
 
+// Untuk kotak pencarian: beberapa hasil teratas saja.
+export async function ambilBarang({ batas = 8, ...saring } = {}) {
+  const query = saringBarang(supabase.from('items').select(KOLOM_BARANG), saring).order('nama').limit(batas)
   const { data, error } = await query
   if (error) throw error
   return data
+}
+
+// Untuk daftar panjang: per halaman, beserta jumlah total yang cocok.
+// Supabase membatasi 1.000 baris per permintaan, jadi daftar barang
+// selalu diambil per halaman.
+export async function ambilHalamanBarang({ halaman = 1, ukuran = 50, ...saring } = {}) {
+  const dari = (halaman - 1) * ukuran
+  const query = saringBarang(supabase.from('items').select(KOLOM_BARANG, { count: 'exact' }), saring)
+    .order('nama')
+    .order('kode_unik')
+    .range(dari, dari + ukuran - 1)
+  const { data, count, error } = await query
+  if (error) throw error
+  return { data, total: count ?? 0 }
+}
+
+// Semua kode unik yang sudah terdaftar, diambil per 1.000.
+export async function ambilSemuaKodeUnik() {
+  const kode = new Set()
+  for (let dari = 0; ; dari += 1000) {
+    const { data, error } = await supabase.from('items').select('kode_unik').order('kode_unik').range(dari, dari + 999)
+    if (error) throw error
+    data.forEach((b) => kode.add(b.kode_unik))
+    if (data.length < 1000) return kode
+  }
+}
+
+export async function ambilKategoriLengkap() {
+  const { data, error } = await supabase.from('categories').select('id, nama, kode').order('nama')
+  if (error) throw error
+  return data
+}
+
+export async function imporBarang(kategori, barang) {
+  const { data, error } = await supabase.rpc('impor_barang', { p_kategori: kategori, p_barang: barang })
+  if (error) throw error
+  return data // { baru, dilewati, berstok }
 }
 
 export function rapikanKode(kode) {

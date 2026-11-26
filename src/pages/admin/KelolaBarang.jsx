@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, PackagePlus, Search, SearchX } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, FileSpreadsheet, PackagePlus, Search, SearchX } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Loading from '../../components/Loading'
@@ -11,11 +12,15 @@ import FormBarang from '../../components/barang/FormBarang'
 import KoreksiStok from '../../components/barang/KoreksiStok'
 import { FotoBarang, KodeBarang, StokBarang } from '../../components/barang/TampilanBarang'
 import { pesanError } from '../../lib/supabaseClient'
-import { ambilBarang, ambilKategori, ubahStatusAktif } from '../../services/itemService'
+import { ambilHalamanBarang, ambilKategori, ubahStatusAktif } from '../../services/itemService'
+import { formatAngka } from '../../utils/format'
 import useTunda from '../../utils/useTunda'
+
+const UKURAN_HALAMAN = 50
 
 export default function KelolaBarang() {
   const [daftar, setDaftar] = useState([])
+  const [total, setTotal] = useState(0)
   const [kategori, setKategori] = useState([])
   const [memuat, setMemuat] = useState(true)
   const [error, setError] = useState('')
@@ -24,6 +29,13 @@ export default function KelolaBarang() {
   const [kategoriId, setKategoriId] = useState('')
   const [status, setStatus] = useState('aktif')
   const cariTertunda = useTunda(cari)
+
+  // Nomor halaman diingat bersama filternya. Begitu filter berubah,
+  // halaman otomatis kembali ke 1.
+  const kunciFilter = `${cariTertunda}|${kategoriId}|${status}`
+  const [posisi, setPosisi] = useState({ kunci: kunciFilter, halaman: 1 })
+  const halaman = posisi.kunci === kunciFilter ? posisi.halaman : 1
+  const setHalaman = (ubahNomor) => setPosisi({ kunci: kunciFilter, halaman: ubahNomor(halaman) })
 
   // undefined = tertutup, null = tambah barang baru, objek = ubah barang itu
   const [formBarang, setFormBarang] = useState(undefined)
@@ -36,17 +48,23 @@ export default function KelolaBarang() {
     setMemuat(true)
     setError('')
     try {
-      setDaftar(await ambilBarang({ cari: cariTertunda, kategoriId, status }))
+      const hasil = await ambilHalamanBarang({ cari: cariTertunda, kategoriId, status, halaman, ukuran: UKURAN_HALAMAN })
+      setDaftar(hasil.data)
+      setTotal(hasil.total)
     } catch (err) {
-      setError(pesanError(err))
+      // Halaman terakhir bisa hilang setelah barang dinonaktifkan.
+      if (err.code === 'PGRST103') setPosisi({ kunci: '', halaman: 1 })
+      else setError(pesanError(err))
     } finally {
       setMemuat(false)
     }
-  }, [cariTertunda, kategoriId, status])
+  }, [cariTertunda, kategoriId, status, halaman])
 
   useEffect(() => {
     muat()
   }, [muat])
+
+  const jumlahHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN))
 
   // Daftar kategori untuk filter dimuat ulang setiap form ditutup,
   // karena admin bisa menambah kategori dari dalam form.
@@ -82,10 +100,16 @@ export default function KelolaBarang() {
         judul="Kelola Barang"
         keterangan="Tambah dan ubah data barang. Stok hanya berubah lewat Barang Masuk, Koreksi stok, dan penyerahan permintaan."
         aksi={
-          <button type="button" className="btn-primer" onClick={() => setFormBarang(null)}>
-            <PackagePlus className="h-4 w-4" aria-hidden="true" />
-            Tambah barang
-          </button>
+          <>
+            <Link to="/admin/barang/impor" className="btn-sekunder">
+              <FileSpreadsheet className="h-4 w-4" aria-hidden="true" />
+              Impor Excel
+            </Link>
+            <button type="button" className="btn-primer" onClick={() => setFormBarang(null)}>
+              <PackagePlus className="h-4 w-4" aria-hidden="true" />
+              Tambah barang
+            </button>
+          </>
         }
       />
 
@@ -127,13 +151,24 @@ export default function KelolaBarang() {
               pesan="Ubah kata pencarian atau filter kategori dan status." />
           ) : (
             <EmptyState ikon={PackagePlus} judul="Belum ada barang"
-              pesan="Tambahkan barang pertama beserta kode unik dan stok awalnya."
-              aksi={<button type="button" className="btn-primer" onClick={() => setFormBarang(null)}>Tambah barang</button>} />
+              pesan="Impor daftar barang dari Excel SAKTI, atau tambahkan barang satu per satu."
+              aksi={
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Link to="/admin/barang/impor" className="btn-primer">Impor Excel</Link>
+                  <button type="button" className="btn-sekunder" onClick={() => setFormBarang(null)}>Tambah barang</button>
+                </div>
+              } />
           )}
         </div>
       ) : (
         <>
-          <p className="mb-2 text-sm text-slate-600" aria-live="polite">{daftar.length} barang</p>
+          <p className="mb-2 text-sm text-slate-600" aria-live="polite">
+            {formatAngka(total)} barang
+            {total > UKURAN_HALAMAN &&
+              `, menampilkan ${formatAngka((halaman - 1) * UKURAN_HALAMAN + 1)} sampai ${formatAngka(
+                Math.min(halaman * UKURAN_HALAMAN, total),
+              )}`}
+          </p>
 
           {/* Desktop: tabel */}
           <div className="kartu hidden overflow-x-auto md:block">
@@ -183,6 +218,24 @@ export default function KelolaBarang() {
               </ItemCard>
             ))}
           </div>
+
+          {jumlahHalaman > 1 && (
+            <nav className="mt-4 flex items-center justify-between gap-3" aria-label="Halaman daftar barang">
+              <button type="button" className="btn-sekunder" disabled={halaman === 1 || memuat}
+                onClick={() => setHalaman((h) => h - 1)}>
+                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                Sebelumnya
+              </button>
+              <span className="text-sm text-slate-600">
+                Halaman {halaman} dari {jumlahHalaman}
+              </span>
+              <button type="button" className="btn-sekunder" disabled={halaman >= jumlahHalaman || memuat}
+                onClick={() => setHalaman((h) => h + 1)}>
+                Berikutnya
+                <ChevronRight className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </nav>
+          )}
         </>
       )}
 

@@ -14,6 +14,7 @@ import {
   unggahFoto,
 } from '../../services/itemService'
 import { catatBarangMasuk } from '../../services/movementService'
+import { kodeDariBmn } from '../../utils/kodeBarang'
 
 const SATUAN_UMUM = ['unit', 'buah', 'rim', 'pak', 'kotak', 'lembar', 'botol', 'set', 'roll']
 
@@ -34,12 +35,6 @@ function formAwal(barang) {
   }
 }
 
-// Kode unik dari kode BMN 10 digit dan NUP, misalnya 3100102001-1.
-function kodeDariBmn(kodeBmn, nup) {
-  const digit = kodeBmn.replace(/\D/g, '')
-  return digit && nup ? `${digit}-${Number(nup)}` : ''
-}
-
 function bilanganBulat(nilai) {
   return nilai !== '' && Number.isInteger(Number(nilai)) && Number(nilai) >= 0
 }
@@ -49,8 +44,9 @@ function validasi(form, kodeFinal) {
   if (!form.nama.trim()) e.nama = 'Nama barang wajib diisi.'
   if (!form.satuan.trim()) e.satuan = 'Satuan wajib diisi.'
   if (form.sumberKode === 'bmn') {
-    if (form.kodeBmn.replace(/\D/g, '').length !== 10) e.kodeBmn = 'Kode BMN harus 10 digit angka.'
-    if (!(Number.isInteger(Number(form.nup)) && Number(form.nup) > 0)) e.nup = 'NUP harus angka lebih dari 0.'
+    if (form.kodeBmn.replace(/\D/g, '').length !== 10) e.kodeBmn = 'Kd Barang harus 10 digit angka.'
+    const nup = Number(form.nup)
+    if (!(Number.isInteger(nup) && nup > 0 && nup <= 999999)) e.nup = 'Isi angka 1 sampai 999999.'
   } else if (!kodeFinal) {
     e.kodeUnik = 'Kode unik wajib diisi, atau tekan Generate kode.'
   }
@@ -196,7 +192,7 @@ export default function FormBarang({ barang, tanpaStokAwal = false, onSelesai, o
             Kode internal
           </PilihanRadio>
           <PilihanRadio nama="sumberKode" nilai="bmn" terpilih={form.sumberKode} onChange={ubah('sumberKode')}>
-            Kode BMN + NUP
+            Kode barang SAKTI
           </PilihanRadio>
         </div>
 
@@ -214,18 +210,18 @@ export default function FormBarang({ barang, tanpaStokAwal = false, onSelesai, o
         ) : (
           <>
             <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
-              <Isian id="kodeBmn" label="Kode barang BMN" error={errors.kodeBmn}>
+              <Isian id="kodeBmn" label="Kd Barang (10 digit)" error={errors.kodeBmn}>
                 <input id="kodeBmn" inputMode="numeric" value={form.kodeBmn} onChange={ubah('kodeBmn')} onBlur={cekKode}
                   className={`${kelasInput(errors.kodeBmn)} font-mono`} placeholder="10 digit" />
               </Isian>
-              <Isian id="nup" label="NUP" error={errors.nup}>
+              <Isian id="nup" label="Kd Brng / NUP" error={errors.nup}>
                 <input id="nup" inputMode="numeric" value={form.nup} onChange={ubah('nup')} onBlur={cekKode}
-                  className={`${kelasInput(errors.nup)} font-mono`} />
+                  className={`${kelasInput(errors.nup)} font-mono`} placeholder="000005" />
               </Isian>
             </div>
             <p className="text-sm text-slate-600">
               Kode unik yang tersimpan:{' '}
-              <span className="font-mono font-medium text-slate-900">{kodeFinal || 'isi kode BMN dan NUP'}</span>
+              <span className="font-mono font-medium text-slate-900">{kodeFinal || 'isi Kd Barang dan Kd Brng'}</span>
             </p>
           </>
         )}

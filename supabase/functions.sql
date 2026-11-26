@@ -422,9 +422,113 @@ AS $$
     WHERE requester_id = auth.uid() AND ada_pembaruan;
 $$;
 
+-- Impor daftar barang dari Excel (misalnya Referensi Barang SAKTI).
+--   p_kategori: [{"kode": "1010301001", "nama": "Alat Tulis"}, ...]
+--   p_barang:   [{"kode_unik": "1010301001.000005", "kode_bmn": "1010301001",
+--                 "nup": 5, "nama": "...", "kategori_kode": "1010301001",
+--                 "satuan": "Buah", "stok": 10, "stok_minimum": 0, "lokasi": null}, ...]
+-- Barang yang kode uniknya sudah ada dilewati, tidak ditimpa: perubahan stok
+-- barang lama tetap harus lewat Barang Masuk atau Koreksi stok.
+-- Satu transaksi: bila satu baris gagal, tidak ada yang tersimpan.
+CREATE OR REPLACE FUNCTION impor_barang(p_kategori JSONB, p_barang JSONB)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_k        RECORD;
+    v_b        RECORD;
+    v_id_kat   BIGINT;
+    v_item     UUID;
+    v_baru     INTEGER := 0;
+    v_dilewati INTEGER := 0;
+    v_berstok  INTEGER := 0;
+BEGIN
+    PERFORM wajib_admin();
+
+    IF p_barang IS NULL OR jsonb_array_length(p_barang) = 0 THEN
+        RAISE EXCEPTION 'Tidak ada barang untuk diimpor.';
+    END IF;
+    IF jsonb_array_length(p_barang) > 5000 THEN
+        RAISE EXCEPTION 'Maksimal 5.000 barang per impor. Bagi file menjadi beberapa bagian.';
+    END IF;
+
+    FOR v_k IN
+        SELECT trim(e->>'kode') AS kode, trim(e->>'nama') AS nama
+        FROM jsonb_array_elements(COALESCE(p_kategori, '[]'::JSONB)) AS e
+    LOOP
+        IF v_k.nama IS NULL OR v_k.nama = '' THEN
+            RAISE EXCEPTION 'Nama kategori untuk kode % wajib diisi.', v_k.kode;
+        END IF;
+        BEGIN
+            SELECT id INTO v_id_kat FROM categories WHERE kode = v_k.kode;
+            IF FOUND THEN
+                UPDATE categories SET nama = v_k.nama WHERE id = v_id_kat AND nama <> v_k.nama;
+            ELSE
+                -- Kategori yang dulu dibuat manual dengan nama sama, dipasangi kode.
+                SELECT id INTO v_id_kat FROM categories WHERE lower(nama) = lower(v_k.nama) AND kode IS NULL;
+                IF FOUND THEN
+                    UPDATE categories SET kode = v_k.kode WHERE id = v_id_kat;
+                ELSE
+                    INSERT INTO categories (nama, kode) VALUES (v_k.nama, v_k.kode);
+                END IF;
+            END IF;
+        EXCEPTION WHEN unique_violation THEN
+            RAISE EXCEPTION 'Nama kategori "%" sudah dipakai kategori lain. Pilih nama lain untuk kode %.',
+                v_k.nama, v_k.kode;
+        END;
+    END LOOP;
+
+    FOR v_b IN
+        SELECT * FROM jsonb_to_recordset(p_barang) AS x(
+            kode_unik TEXT, kode_bmn TEXT, nup INTEGER, nama TEXT, kategori_kode TEXT,
+            satuan TEXT, stok INTEGER, stok_minimum INTEGER, lokasi TEXT)
+    LOOP
+        IF v_b.stok < 0 OR v_b.stok_minimum < 0 THEN
+            RAISE EXCEPTION 'Stok barang % tidak boleh negatif.', v_b.kode_unik;
+        END IF;
+
+        -- RETURNING INTO tidak mengosongkan variabel bila tidak ada baris baru.
+        v_item := NULL;
+        INSERT INTO items (kode_unik, kode_bmn, nup, nama, category_id, satuan, stok_minimum, lokasi)
+        VALUES (
+            upper(trim(v_b.kode_unik)),
+            NULLIF(trim(v_b.kode_bmn), ''),
+            v_b.nup,
+            trim(v_b.nama),
+            (SELECT id FROM categories WHERE kode = v_b.kategori_kode),
+            COALESCE(NULLIF(trim(v_b.satuan), ''), 'unit'),
+            COALESCE(v_b.stok_minimum, 0),
+            NULLIF(trim(v_b.lokasi), '')
+        )
+        ON CONFLICT (kode_unik) DO NOTHING
+        RETURNING id INTO v_item;
+
+        IF v_item IS NULL THEN
+            v_dilewati := v_dilewati + 1;
+            CONTINUE;
+        END IF;
+        v_baru := v_baru + 1;
+
+        IF COALESCE(v_b.stok, 0) > 0 THEN
+            UPDATE items SET stok = v_b.stok WHERE id = v_item;
+            INSERT INTO stock_movements
+                (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, tanggal, catatan, created_by)
+            VALUES
+                (v_item, 'masuk', v_b.stok, 0, v_b.stok, hari_ini(), 'Stok awal (impor Excel)', auth.uid());
+            v_berstok := v_berstok + 1;
+        END IF;
+    END LOOP;
+
+    RETURN jsonb_build_object('baru', v_baru, 'dilewati', v_dilewati, 'berstok', v_berstok);
+END;
+$$;
+
 -- Hak menjalankan fungsi: hanya pengguna yang sudah login.
 REVOKE EXECUTE ON FUNCTION
     is_admin(), is_verified_user(), wajib_admin(),
+    impor_barang(JSONB, JSONB),
     tambah_barang_masuk(UUID, INTEGER, TEXT, TEXT, TEXT, DATE),
     koreksi_stok(UUID, INTEGER, TEXT),
     buat_permintaan(TEXT, DATE, JSONB),
@@ -436,6 +540,7 @@ FROM PUBLIC, anon;
 
 GRANT EXECUTE ON FUNCTION
     is_admin(), is_verified_user(),
+    impor_barang(JSONB, JSONB),
     tambah_barang_masuk(UUID, INTEGER, TEXT, TEXT, TEXT, DATE),
     koreksi_stok(UUID, INTEGER, TEXT),
     buat_permintaan(TEXT, DATE, JSONB),
