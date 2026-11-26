@@ -87,7 +87,7 @@ CREATE TABLE stock_movements (
     jumlah         INTEGER NOT NULL CHECK (jumlah <> 0),
     saldo_sebelum  INTEGER NOT NULL CHECK (saldo_sebelum >= 0),
     saldo_sesudah  INTEGER NOT NULL CHECK (saldo_sesudah >= 0),
-    tanggal        DATE NOT NULL DEFAULT current_date,
+    tanggal        DATE NOT NULL DEFAULT (now() AT TIME ZONE 'Asia/Jakarta')::DATE,
     request_id     UUID REFERENCES requests(id) ON DELETE RESTRICT,
     dokumen_ref    TEXT,
     foto_bukti_url TEXT,

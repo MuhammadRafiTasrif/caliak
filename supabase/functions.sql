@@ -9,6 +9,18 @@
 -- Fungsi memakai SECURITY DEFINER agar bisa menulis ke tabel yang
 -- tertutup untuk pengguna biasa. Karena itu setiap fungsi WAJIB
 -- memeriksa siapa pemanggilnya (auth.uid()) sebelum mengubah data.
+--
+-- File ini aman dijalankan ulang (semua memakai CREATE OR REPLACE).
+
+-- Tanggal hari ini menurut WIB. Server Supabase memakai UTC, jadi
+-- current_date bisa tertinggal satu hari antara pukul 00.00 dan 07.00 WIB.
+CREATE OR REPLACE FUNCTION hari_ini()
+RETURNS DATE
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT (now() AT TIME ZONE 'Asia/Jakarta')::DATE;
+$$;
 
 -- Pembantu hak akses. Juga dipakai di policies.sql.
 CREATE OR REPLACE FUNCTION is_admin()
@@ -59,7 +71,7 @@ CREATE OR REPLACE FUNCTION tambah_barang_masuk(
     p_dokumen_ref    TEXT DEFAULT NULL,
     p_foto_bukti_url TEXT DEFAULT NULL,
     p_catatan        TEXT DEFAULT NULL,
-    p_tanggal        DATE DEFAULT current_date
+    p_tanggal        DATE DEFAULT NULL
 )
 RETURNS INTEGER
 LANGUAGE plpgsql
@@ -69,13 +81,14 @@ AS $$
 DECLARE
     v_stok_lama INTEGER;
     v_aktif     BOOLEAN;
+    v_tanggal   DATE := COALESCE(p_tanggal, hari_ini());
 BEGIN
     PERFORM wajib_admin();
 
     IF p_jumlah IS NULL OR p_jumlah <= 0 THEN
         RAISE EXCEPTION 'Jumlah barang masuk harus lebih dari 0.';
     END IF;
-    IF p_tanggal > current_date THEN
+    IF v_tanggal > hari_ini() THEN
         RAISE EXCEPTION 'Tanggal barang masuk tidak boleh di masa depan.';
     END IF;
 
@@ -96,7 +109,7 @@ BEGIN
         (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, tanggal,
          dokumen_ref, foto_bukti_url, catatan, created_by)
     VALUES
-        (p_item_id, 'masuk', p_jumlah, v_stok_lama, v_stok_lama + p_jumlah, p_tanggal,
+        (p_item_id, 'masuk', p_jumlah, v_stok_lama, v_stok_lama + p_jumlah, v_tanggal,
          NULLIF(trim(p_dokumen_ref), ''), NULLIF(p_foto_bukti_url, ''),
          NULLIF(trim(p_catatan), ''), auth.uid());
 
@@ -138,10 +151,10 @@ BEGIN
     UPDATE items SET stok = p_stok_baru WHERE id = p_item_id;
 
     INSERT INTO stock_movements
-        (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, catatan, created_by)
+        (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, tanggal, catatan, created_by)
     VALUES
         (p_item_id, 'koreksi', p_stok_baru - v_stok_lama, v_stok_lama, p_stok_baru,
-         trim(p_alasan), auth.uid());
+         hari_ini(), trim(p_alasan), auth.uid());
 
     RETURN p_stok_baru;
 END;
@@ -161,7 +174,7 @@ SET search_path = public
 AS $$
 DECLARE
     v_request_id UUID;
-    v_tahun      INTEGER := extract(year FROM current_date)::INTEGER;
+    v_tahun      INTEGER := extract(year FROM hari_ini())::INTEGER;
     v_urut       INTEGER;
     v_baris      RECORD;
 BEGIN
@@ -171,7 +184,7 @@ BEGIN
     IF p_keperluan IS NULL OR length(trim(p_keperluan)) = 0 THEN
         RAISE EXCEPTION 'Keperluan wajib diisi.';
     END IF;
-    IF p_tanggal_dibutuhkan IS NULL OR p_tanggal_dibutuhkan < current_date THEN
+    IF p_tanggal_dibutuhkan IS NULL OR p_tanggal_dibutuhkan < hari_ini() THEN
         RAISE EXCEPTION 'Tanggal dibutuhkan tidak boleh sebelum hari ini.';
     END IF;
     IF p_items IS NULL OR jsonb_typeof(p_items) <> 'array' OR jsonb_array_length(p_items) = 0 THEN
@@ -382,10 +395,10 @@ BEGIN
         UPDATE items SET stok = v_baris.stok - v_baris.jumlah WHERE id = v_baris.item_id;
 
         INSERT INTO stock_movements
-            (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, request_id, catatan, created_by)
+            (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, tanggal, request_id, catatan, created_by)
         VALUES
             (v_baris.item_id, 'keluar', -v_baris.jumlah, v_baris.stok, v_baris.stok - v_baris.jumlah,
-             p_request_id, 'Penyerahan ' || v_nomor, auth.uid());
+             hari_ini(), p_request_id, 'Penyerahan ' || v_nomor, auth.uid());
     END LOOP;
 
     UPDATE requests
