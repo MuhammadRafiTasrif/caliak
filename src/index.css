@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Kelas yang dipakai berulang di banyak halaman. Ubah di sini saja bila
+  ingin mengganti tampilan semua tombol, input, atau kartu sekaligus.
+*/
+@layer base {
+  body {
+    @apply bg-slate-100 text-slate-800 antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold
+      transition-colors disabled:cursor-not-allowed disabled:opacity-60
+      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primer-500;
+  }
+  .btn-primer {
+    @apply btn bg-primer-700 text-white hover:bg-primer-800;
+  }
+  .btn-sekunder {
+    @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+  }
+  .btn-bahaya {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-sukses {
+    @apply btn bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-slate-700;
+  }
+  .input {
+    @apply block w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800
+      placeholder:text-slate-400 focus:border-primer-500 focus:outline-none focus:ring-2 focus:ring-primer-100
+      disabled:bg-slate-100;
+  }
+  .input-error {
+    @apply border-red-400 focus:border-red-500 focus:ring-red-100;
+  }
+  .teks-error {
+    @apply mt-1 text-xs text-red-600;
+  }
+
+  .kartu {
+    @apply rounded-xl border border-slate-200 bg-white shadow-sm;
+  }
+}
