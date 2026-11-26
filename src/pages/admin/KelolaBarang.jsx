@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, ChevronLeft, ChevronRight, FileSpreadsheet, PackagePlus, Search, SearchX } from 'lucide-react'
+import { AlertTriangle, FileSpreadsheet, PackagePlus, Search, SearchX } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Loading from '../../components/Loading'
 import Modal from '../../components/Modal'
 import ConfirmModal from '../../components/ConfirmModal'
 import ItemCard from '../../components/ItemCard'
+import Penomoran from '../../components/Penomoran'
 import FormBarang from '../../components/barang/FormBarang'
 import KoreksiStok from '../../components/barang/KoreksiStok'
 import { FotoBarang, KodeBarang, StokBarang } from '../../components/barang/TampilanBarang'
@@ -15,6 +16,7 @@ import { pesanError } from '../../lib/supabaseClient'
 import { ambilHalamanBarang, ambilKategori, ubahStatusAktif } from '../../services/itemService'
 import { formatAngka } from '../../utils/format'
 import useTunda from '../../utils/useTunda'
+import useHalaman from '../../utils/useHalaman'
 
 const UKURAN_HALAMAN = 50
 
@@ -30,12 +32,7 @@ export default function KelolaBarang() {
   const [status, setStatus] = useState('aktif')
   const cariTertunda = useTunda(cari)
 
-  // Nomor halaman diingat bersama filternya. Begitu filter berubah,
-  // halaman otomatis kembali ke 1.
-  const kunciFilter = `${cariTertunda}|${kategoriId}|${status}`
-  const [posisi, setPosisi] = useState({ kunci: kunciFilter, halaman: 1 })
-  const halaman = posisi.kunci === kunciFilter ? posisi.halaman : 1
-  const setHalaman = (ubahNomor) => setPosisi({ kunci: kunciFilter, halaman: ubahNomor(halaman) })
+  const { halaman, keHalaman, keAwal } = useHalaman(`${cariTertunda}|${kategoriId}|${status}`)
 
   // undefined = tertutup, null = tambah barang baru, objek = ubah barang itu
   const [formBarang, setFormBarang] = useState(undefined)
@@ -53,18 +50,17 @@ export default function KelolaBarang() {
       setTotal(hasil.total)
     } catch (err) {
       // Halaman terakhir bisa hilang setelah barang dinonaktifkan.
-      if (err.code === 'PGRST103') setPosisi({ kunci: '', halaman: 1 })
+      if (err.code === 'PGRST103') keAwal()
       else setError(pesanError(err))
     } finally {
       setMemuat(false)
     }
+    // keAwal sengaja tidak ikut: fungsinya dibuat ulang setiap render.
   }, [cariTertunda, kategoriId, status, halaman])
 
   useEffect(() => {
     muat()
   }, [muat])
-
-  const jumlahHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN))
 
   // Daftar kategori untuk filter dimuat ulang setiap form ditutup,
   // karena admin bisa menambah kategori dari dalam form.
@@ -219,23 +215,8 @@ export default function KelolaBarang() {
             ))}
           </div>
 
-          {jumlahHalaman > 1 && (
-            <nav className="mt-4 flex items-center justify-between gap-3" aria-label="Halaman daftar barang">
-              <button type="button" className="btn-sekunder" disabled={halaman === 1 || memuat}
-                onClick={() => setHalaman((h) => h - 1)}>
-                <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                Sebelumnya
-              </button>
-              <span className="text-sm text-slate-600">
-                Halaman {halaman} dari {jumlahHalaman}
-              </span>
-              <button type="button" className="btn-sekunder" disabled={halaman >= jumlahHalaman || memuat}
-                onClick={() => setHalaman((h) => h + 1)}>
-                Berikutnya
-                <ChevronRight className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </nav>
-          )}
+          <Penomoran halaman={halaman} total={total} ukuran={UKURAN_HALAMAN} onPindah={keHalaman} sibuk={memuat}
+            label="Halaman daftar barang" />
         </>
       )}
 

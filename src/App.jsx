@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { supabaseSiap } from './lib/supabaseClient'
 import { AuthProvider, halamanAwal, useAuth } from './context/AuthContext'
+import { PermintaanProvider } from './context/PermintaanContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Loading from './components/Loading'
@@ -25,35 +26,37 @@ export default function App() {
 
   return (
     <AuthProvider>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/daftar" element={<Register />} />
-        <Route path="/menunggu-verifikasi" element={<MenungguVerifikasi />} />
+      <PermintaanProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/daftar" element={<Register />} />
+          <Route path="/menunggu-verifikasi" element={<MenungguVerifikasi />} />
 
-        {/* Semua pengguna terverifikasi (admin juga boleh mengajukan permintaan) */}
-        <Route element={<ProtectedRoute />}>
-          <Route element={<Layout />}>
-            <Route path="/katalog" element={<Katalog />} />
-            <Route path="/permintaan/baru" element={<BuatPermintaan />} />
-            <Route path="/permintaan-saya" element={<PermintaanSaya />} />
+          {/* Semua pengguna terverifikasi (admin juga boleh mengajukan permintaan) */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
+              <Route path="/katalog" element={<Katalog />} />
+              <Route path="/permintaan/baru" element={<BuatPermintaan />} />
+              <Route path="/permintaan-saya" element={<PermintaanSaya />} />
+            </Route>
           </Route>
-        </Route>
 
-        {/* Khusus admin */}
-        <Route element={<ProtectedRoute peran={['admin']} />}>
-          <Route element={<Layout />}>
-            <Route path="/admin" element={<Dashboard />} />
-            <Route path="/admin/barang" element={<KelolaBarang />} />
-            <Route path="/admin/barang/impor" element={<ImporBarang />} />
-            <Route path="/admin/barang-masuk" element={<BarangMasuk />} />
-            <Route path="/admin/persetujuan" element={<Persetujuan />} />
-            <Route path="/admin/riwayat" element={<Riwayat />} />
-            <Route path="/admin/pengguna" element={<KelolaPengguna />} />
+          {/* Khusus admin */}
+          <Route element={<ProtectedRoute peran={['admin']} />}>
+            <Route element={<Layout />}>
+              <Route path="/admin" element={<Dashboard />} />
+              <Route path="/admin/barang" element={<KelolaBarang />} />
+              <Route path="/admin/barang/impor" element={<ImporBarang />} />
+              <Route path="/admin/barang-masuk" element={<BarangMasuk />} />
+              <Route path="/admin/persetujuan" element={<Persetujuan />} />
+              <Route path="/admin/riwayat" element={<Riwayat />} />
+              <Route path="/admin/pengguna" element={<KelolaPengguna />} />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<ArahkanKeAwal />} />
-      </Routes>
+          <Route path="*" element={<ArahkanKeAwal />} />
+        </Routes>
+      </PermintaanProvider>
     </AuthProvider>
   )
 }

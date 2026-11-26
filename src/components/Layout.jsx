@@ -15,11 +15,12 @@ import {
   X,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { usePermintaan } from '../context/PermintaanContext'
 import Brand from './Brand'
 
 const MENU_ADMIN = [
   { ke: '/admin', label: 'Dashboard', ikon: LayoutDashboard, persis: true },
-  { ke: '/admin/persetujuan', label: 'Persetujuan', ikon: ClipboardCheck },
+  { ke: '/admin/persetujuan', label: 'Persetujuan', ikon: ClipboardCheck, badge: 'menunggu' },
   { ke: '/admin/barang', label: 'Kelola Barang', ikon: Package },
   { ke: '/admin/barang-masuk', label: 'Barang Masuk', ikon: ArrowDownToLine },
   { ke: '/admin/riwayat', label: 'Riwayat', ikon: History },
@@ -29,8 +30,25 @@ const MENU_ADMIN = [
 const MENU_PEMOHON = [
   { ke: '/katalog', label: 'Katalog', ikon: LayoutGrid },
   { ke: '/permintaan/baru', label: 'Buat Permintaan', ikon: PlusCircle },
-  { ke: '/permintaan-saya', label: 'Permintaan Saya', ikon: ClipboardList },
+  { ke: '/permintaan-saya', label: 'Permintaan Saya', ikon: ClipboardList, badge: 'pembaruan' },
 ]
+
+const KETERANGAN_BADGE = {
+  menunggu: 'permintaan menunggu persetujuan',
+  pembaruan: 'permintaan dengan status baru',
+}
+
+// Angka kecil di menu. `jenis` adalah nama angka di PermintaanContext.
+function AngkaBadge({ jenis, className = '' }) {
+  const angka = usePermintaan()[jenis] ?? 0
+  if (!jenis || angka === 0) return null
+  return (
+    <span className={`inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold leading-5 text-slate-900 ${className}`}>
+      {angka > 99 ? '99+' : angka}
+      <span className="sr-only"> {KETERANGAN_BADGE[jenis]}</span>
+    </span>
+  )
+}
 
 export default function Layout() {
   const { isAdmin } = useAuth()
@@ -127,6 +145,7 @@ function GrupMenu({ judul, menu }) {
             >
               <m.ikon className="h-[18px] w-[18px]" aria-hidden="true" />
               {m.label}
+              <AngkaBadge jenis={m.badge} className="ml-auto" />
             </NavLink>
           </li>
         ))}
@@ -169,12 +188,13 @@ function LayoutPemohon() {
                 key={m.ke}
                 to={m.ke}
                 className={({ isActive }) =>
-                  `flex min-h-11 items-center rounded-lg px-3 text-sm font-medium ${
+                  `flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium ${
                     isActive ? 'bg-white text-primer-800' : 'text-primer-50 hover:bg-white/10'
                   }`
                 }
               >
                 {m.label}
+                <AngkaBadge jenis={m.badge} />
               </NavLink>
             ))}
           </nav>
@@ -207,12 +227,15 @@ function LayoutPemohon() {
             key={m.ke}
             to={m.ke}
             className={({ isActive }) =>
-              `flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium ${
+              `relative flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-medium ${
                 isActive ? 'text-primer-700' : 'text-slate-600'
               }`
             }
           >
-            <m.ikon className="h-5 w-5" aria-hidden="true" />
+            <span className="relative">
+              <m.ikon className="h-5 w-5" aria-hidden="true" />
+              <AngkaBadge jenis={m.badge} className="absolute -right-3 -top-2" />
+            </span>
             {m.label}
           </NavLink>
         ))}

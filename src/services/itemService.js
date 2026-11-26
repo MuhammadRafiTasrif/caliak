@@ -20,10 +20,11 @@ export async function tambahKategori(nama) {
 }
 
 // status: 'aktif' | 'nonaktif' | 'semua'
-function saringBarang(query, { cari = '', kategoriId = '', status = 'aktif' }) {
+function saringBarang(query, { cari = '', kategoriId = '', status = 'aktif', hanyaTersedia = false }) {
   if (status === 'aktif') query = query.eq('is_active', true)
   if (status === 'nonaktif') query = query.eq('is_active', false)
   if (kategoriId) query = query.eq('category_id', kategoriId)
+  if (hanyaTersedia) query = query.gt('stok', 0)
 
   // Koma dan tanda kurung punya arti khusus di filter or() Supabase, jadi dibuang.
   const kata = cari.replace(/[,()%]/g, ' ').trim()
@@ -51,6 +52,15 @@ export async function ambilHalamanBarang({ halaman = 1, ukuran = 50, ...saring }
   const { data, count, error } = await query
   if (error) throw error
   return { data, total: count ?? 0 }
+}
+
+// Data terbaru beberapa barang sekaligus (misalnya isi keranjang),
+// supaya stok yang ditampilkan bukan stok saat barang dipilih.
+export async function ambilBarangDenganId(ids) {
+  if (ids.length === 0) return []
+  const { data, error } = await supabase.from('items').select(KOLOM_BARANG).in('id', ids)
+  if (error) throw error
+  return data
 }
 
 // Semua kode unik yang sudah terdaftar, diambil per 1.000.
