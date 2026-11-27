@@ -525,8 +525,44 @@ BEGIN
 END;
 $$;
 
+-- Angka ringkasan Dashboard admin. Tanpa SECURITY DEFINER: RLS tetap
+-- berlaku, jadi hanya admin yang mendapat angka lengkap.
+CREATE OR REPLACE FUNCTION ringkasan_dashboard()
+RETURNS JSONB
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+    SELECT jsonb_build_object(
+        'menunggu', (SELECT count(*) FROM requests WHERE status = 'menunggu'),
+        'disetujui', (SELECT count(*) FROM requests WHERE status = 'disetujui'),
+        'menipis', (SELECT count(*) FROM items
+                    WHERE is_active AND stok_minimum > 0 AND stok <= stok_minimum),
+        'barang_aktif', (SELECT count(*) FROM items WHERE is_active),
+        'mutasi_bulan_ini', (SELECT count(*) FROM stock_movements
+                             WHERE tanggal >= date_trunc('month', hari_ini())::DATE)
+    );
+$$;
+
+-- Barang aktif yang stoknya sama dengan atau di bawah stok minimum.
+-- Supabase tidak bisa membandingkan dua kolom lewat filter biasa,
+-- jadi perbandingannya dilakukan di sini.
+CREATE OR REPLACE FUNCTION barang_stok_menipis(p_batas INTEGER DEFAULT 10)
+RETURNS TABLE (id UUID, kode_unik TEXT, nama TEXT, satuan TEXT, stok INTEGER, stok_minimum INTEGER)
+LANGUAGE sql
+STABLE
+SET search_path = public
+AS $$
+    SELECT id, kode_unik, nama, satuan, stok, stok_minimum
+    FROM items
+    WHERE is_active AND stok_minimum > 0 AND stok <= stok_minimum
+    ORDER BY (stok::NUMERIC / stok_minimum), nama
+    LIMIT p_batas;
+$$;
+
 -- Hak menjalankan fungsi: hanya pengguna yang sudah login.
 REVOKE EXECUTE ON FUNCTION
+    ringkasan_dashboard(), barang_stok_menipis(INTEGER),
     is_admin(), is_verified_user(), wajib_admin(),
     impor_barang(JSONB, JSONB),
     tambah_barang_masuk(UUID, INTEGER, TEXT, TEXT, TEXT, DATE),
@@ -539,6 +575,7 @@ REVOKE EXECUTE ON FUNCTION
 FROM PUBLIC, anon;
 
 GRANT EXECUTE ON FUNCTION
+    ringkasan_dashboard(), barang_stok_menipis(INTEGER),
     is_admin(), is_verified_user(),
     impor_barang(JSONB, JSONB),
     tambah_barang_masuk(UUID, INTEGER, TEXT, TEXT, TEXT, DATE),
@@ -550,5 +587,8 @@ GRANT EXECUTE ON FUNCTION
     tandai_permintaan_dilihat()
 TO authenticated;
 
--- set_updated_at dan handle_new_user hanya dipanggil trigger.
-REVOKE EXECUTE ON FUNCTION set_updated_at(), handle_new_user() FROM PUBLIC, anon, authenticated;
+-- Fungsi trigger, tidak untuk dipanggil langsung.
+-- cegah_ubah_akun_sendiri dibuat di schema.sql (atau migrasi_002), jadi
+-- jalankan file itu dulu sebelum file ini.
+REVOKE EXECUTE ON FUNCTION set_updated_at(), handle_new_user(), cegah_ubah_akun_sendiri()
+FROM PUBLIC, anon, authenticated;

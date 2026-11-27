@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import { useLocation } from 'react-router-dom'
 import { useAuth } from './AuthContext'
 import { hitungMenunggu, hitungPembaruanSaya } from '../services/requestService'
+import { hitungBelumVerifikasi } from '../services/userService'
 
 // Dua hal yang dipakai lintas halaman:
 //   1. keranjang permintaan (barang yang dipilih dari Katalog),
@@ -40,6 +41,7 @@ function PenyediaPermintaan({ kunci, children }) {
   const [keranjang, setKeranjang] = useState(() => bacaKeranjang(kunci))
   const [pembaruan, setPembaruan] = useState(0)
   const [menunggu, setMenunggu] = useState(0)
+  const [belumVerifikasi, setBelumVerifikasi] = useState(0)
 
   useEffect(() => {
     try {
@@ -53,7 +55,10 @@ function PenyediaPermintaan({ kunci, children }) {
     if (!user) return
     try {
       setPembaruan(await hitungPembaruanSaya(user.id))
-      if (isAdmin) setMenunggu(await hitungMenunggu())
+      if (isAdmin) {
+        setMenunggu(await hitungMenunggu())
+        setBelumVerifikasi(await hitungBelumVerifikasi())
+      }
     } catch {
       // Badge hanya penanda. Bila gagal dimuat, menu tetap bisa dipakai.
     }
@@ -90,6 +95,7 @@ function PenyediaPermintaan({ kunci, children }) {
     kosongkanKeranjang: () => setKeranjang([]),
     pembaruan,
     menunggu,
+    belumVerifikasi,
     muatUlangBadge,
   }
 

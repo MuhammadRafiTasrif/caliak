@@ -63,6 +63,12 @@ export async function ambilBarangDenganId(ids) {
   return data
 }
 
+export async function ambilBarangStokMenipis(batas = 10) {
+  const { data, error } = await supabase.rpc('barang_stok_menipis', { p_batas: batas })
+  if (error) throw error
+  return data
+}
+
 // Semua kode unik yang sudah terdaftar, diambil per 1.000.
 export async function ambilSemuaKodeUnik() {
   const kode = new Set()

@@ -101,6 +101,50 @@ export async function ambilRiwayatStatus(requestId) {
   return data
 }
 
+const KOLOM_LOG = `
+  id, status, catatan, created_at,
+  pengubah:profiles(nama),
+  permintaan:requests(nomor, pemohon:profiles!requests_requester_id_fkey(nama, unit_kerja))
+`
+
+function saringLog(query, { tanggalDari, tanggalSampai, status }) {
+  if (tanggalDari) query = query.gte('created_at', `${tanggalDari}T00:00:00+07:00`)
+  if (tanggalSampai) query = query.lte('created_at', `${tanggalSampai}T23:59:59.999+07:00`)
+  if (status) query = query.eq('status', status)
+  return query
+}
+
+// Riwayat perubahan status semua permintaan (untuk admin).
+export async function ambilHalamanLogStatus({ halaman = 1, ukuran = 50, ...saring } = {}) {
+  const dari = (halaman - 1) * ukuran
+  const { data, count, error } = await saringLog(
+    supabase.from('request_status_logs').select(KOLOM_LOG, { count: 'exact' }),
+    saring,
+  )
+    .order('created_at', { ascending: false })
+    .range(dari, dari + ukuran - 1)
+  if (error) throw error
+  return { data, total: count ?? 0 }
+}
+
+export async function ambilSemuaLogStatus(saring = {}) {
+  const semua = []
+  for (let dari = 0; ; dari += 1000) {
+    const { data, error } = await saringLog(supabase.from('request_status_logs').select(KOLOM_LOG), saring)
+      .order('created_at', { ascending: false })
+      .range(dari, dari + 999)
+    if (error) throw error
+    semua.push(...data)
+    if (data.length < 1000) return semua
+  }
+}
+
+export async function ambilRingkasanDashboard() {
+  const { data, error } = await supabase.rpc('ringkasan_dashboard')
+  if (error) throw error
+  return data
+}
+
 export async function hitungPembaruanSaya(userId) {
   const { count, error } = await supabase
     .from('requests')

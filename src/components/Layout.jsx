@@ -24,7 +24,7 @@ const MENU_ADMIN = [
   { ke: '/admin/barang', label: 'Kelola Barang', ikon: Package },
   { ke: '/admin/barang-masuk', label: 'Barang Masuk', ikon: ArrowDownToLine },
   { ke: '/admin/riwayat', label: 'Riwayat', ikon: History },
-  { ke: '/admin/pengguna', label: 'Kelola Pengguna', ikon: Users },
+  { ke: '/admin/pengguna', label: 'Kelola Pengguna', ikon: Users, badge: 'belumVerifikasi' },
 ]
 
 const MENU_PEMOHON = [
@@ -36,6 +36,7 @@ const MENU_PEMOHON = [
 const KETERANGAN_BADGE = {
   menunggu: 'permintaan menunggu persetujuan',
   pembaruan: 'permintaan dengan status baru',
+  belumVerifikasi: 'akun menunggu verifikasi',
 }
 
 // Angka kecil di menu. `jenis` adalah nama angka di PermintaanContext.

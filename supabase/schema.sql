@@ -7,6 +7,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- oleh trigger di bagian bawah file ini.
 CREATE TABLE profiles (
     id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    email       TEXT,
     nip         TEXT UNIQUE,
     nama        TEXT NOT NULL,
     unit_kerja  TEXT,
@@ -149,9 +150,10 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    INSERT INTO profiles (id, nip, nama, unit_kerja)
+    INSERT INTO profiles (id, email, nip, nama, unit_kerja)
     VALUES (
         NEW.id,
+        NEW.email,
         NULLIF(trim(NEW.raw_user_meta_data->>'nip'), ''),
         COALESCE(NULLIF(trim(NEW.raw_user_meta_data->>'nama'), ''), split_part(NEW.email, '@', 1)),
         NULLIF(trim(NEW.raw_user_meta_data->>'unit_kerja'), '')
@@ -163,3 +165,21 @@ $$;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- Admin tidak boleh mencabut role admin atau verifikasi akunnya sendiri,
+-- supaya tidak ada yang terkunci di luar aplikasi karena salah klik.
+CREATE OR REPLACE FUNCTION cegah_ubah_akun_sendiri()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.id = auth.uid() AND (NEW.role <> OLD.role OR NEW.is_verified <> OLD.is_verified) THEN
+        RAISE EXCEPTION 'Anda tidak bisa mengubah role atau verifikasi akun Anda sendiri.';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER profiles_cegah_ubah_sendiri
+    BEFORE UPDATE ON profiles
+    FOR EACH ROW EXECUTE FUNCTION cegah_ubah_akun_sendiri();

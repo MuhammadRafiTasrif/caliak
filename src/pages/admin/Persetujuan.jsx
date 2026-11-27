@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { AlertTriangle, CheckCheck, ClipboardCheck, PackageCheck, X } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
@@ -28,7 +29,11 @@ const FILTER_STATUS = ['menunggu', 'disetujui', 'selesai', 'ditolak', 'dibatalka
 
 export default function Persetujuan() {
   const { menunggu, muatUlangBadge } = usePermintaan()
-  const [status, setStatus] = useState('menunggu')
+  // Status awal bisa dikirim lewat alamat, misalnya dari Dashboard: ?status=disetujui
+  const [params] = useSearchParams()
+  const [status, setStatus] = useState(() =>
+    FILTER_STATUS.includes(params.get('status') ?? 'x') ? params.get('status') : 'menunggu',
+  )
   const [tanggalDari, setTanggalDari] = useState('')
   const [tanggalSampai, setTanggalSampai] = useState('')
   const { halaman, keHalaman } = useHalaman(`${status}|${tanggalDari}|${tanggalSampai}`)
