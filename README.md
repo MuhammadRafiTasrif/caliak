@@ -61,6 +61,14 @@ npm run dev
 
 Buka `http://localhost:5173`. Perintah dijalankan dari folder `caliak` (folder yang berisi `package.json`).
 
+## Hosting di Vercel
+
+1. Di [vercel.com](https://vercel.com), pilih **Add New > Project**, lalu impor repo GitHub CALIAK. Vercel mengenali Vite secara otomatis (build `npm run build`, folder hasil `dist`).
+2. Di **Environment Variables**, isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` dengan nilai yang sama seperti di `.env`, lalu **Deploy**.
+3. Di Supabase, **Authentication > URL Configuration**: ganti **Site URL** dengan alamat Vercel (misalnya `https://caliak.vercel.app`), dan tambahkan alamat itu di **Redirect URLs**.
+
+`vercel.json` mengarahkan semua alamat ke `index.html`, sehingga halaman seperti `/katalog` bisa dibuka langsung dan di-refresh tanpa error 404. Setiap `git push` ke branch `main` otomatis memicu deploy ulang.
+
 ## Akun
 
 **Bila memakai `seed.sql`:**
