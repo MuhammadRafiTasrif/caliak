@@ -70,8 +70,18 @@ export function AuthProvider({ children }) {
     return { perluKonfirmasiEmail: !data.session }
   }
 
+  // Keluar harus selalu berhasil. signOut tetap menghubungi server, dan bila
+  // server tidak terjangkau (koneksi putus) sesi tidak ikut dihapus. Karena
+  // itu sesi yang tersimpan di browser dihapus langsung dari sini.
   async function logout() {
-    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
+    if (error) {
+      console.warn('Server tidak terjangkau saat keluar, sesi dihapus di perangkat:', error.message)
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+        .forEach((k) => localStorage.removeItem(k))
+      setSession(null)
+    }
   }
 
   const nilai = {

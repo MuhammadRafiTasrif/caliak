@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import {
   ArrowDownToLine,
   ClipboardCheck,
@@ -49,6 +50,18 @@ function AngkaBadge({ jenis, className = '' }) {
       <span className="sr-only"> {KETERANGAN_BADGE[jenis]}</span>
     </span>
   )
+}
+
+// Keluar lalu buka halaman Masuk tanpa mengingat halaman terakhir, supaya
+// pengguna berikutnya di perangkat yang sama mulai dari halaman awalnya sendiri.
+function useKeluar() {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
+  return async () => {
+    await logout()
+    navigate('/login', { replace: true, state: null })
+    toast.success('Anda sudah keluar.')
+  }
 }
 
 export default function Layout() {
@@ -156,14 +169,15 @@ function GrupMenu({ judul, menu }) {
 }
 
 function KakiSidebar() {
-  const { profile, logout } = useAuth()
+  const { profile } = useAuth()
+  const keluar = useKeluar()
   return (
     <div className="border-t border-white/10 px-5 py-4">
       <p className="truncate text-sm font-semibold text-white">{profile?.nama}</p>
       <p className="truncate text-xs text-primer-200">Admin, {profile?.unit_kerja || 'unit kerja belum diisi'}</p>
       <button
         type="button"
-        onClick={logout}
+        onClick={keluar}
         className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-white/30 px-3 text-sm font-medium text-white hover:bg-white/10"
       >
         <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -175,7 +189,8 @@ function KakiSidebar() {
 
 // Pemohon: navbar di atas, ditambah menu bawah di HP karena menunya hanya tiga.
 function LayoutPemohon() {
-  const { profile, logout } = useAuth()
+  const { profile } = useAuth()
+  const keluar = useKeluar()
 
   return (
     <div className="min-h-screen pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
@@ -207,7 +222,7 @@ function LayoutPemohon() {
             </div>
             <button
               type="button"
-              onClick={logout}
+              onClick={keluar}
               className="flex h-11 w-11 items-center justify-center rounded-lg text-primer-50 hover:bg-white/10"
               aria-label="Keluar"
               title="Keluar"
