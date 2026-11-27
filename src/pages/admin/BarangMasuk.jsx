@@ -174,8 +174,8 @@ export default function BarangMasuk() {
             <textarea id="catatan" rows={2} value={form.catatan} onChange={ubah('catatan')} className="input" />
           </div>
 
-          <ImageUpload key={kunciFoto} id="fotoBukti" label="Foto bukti (opsional)"
-            keterangan="Foto dokumen atau barang yang diterima. JPG, PNG, atau WebP, dikecilkan otomatis di bawah 2 MB."
+          <ImageUpload key={kunciFoto} id="fotoBukti" label="Foto bukti (opsional)" bentukPotong="asli"
+            keterangan="Foto dokumen atau barang yang diterima. Bisa dipotong, lalu dikecilkan otomatis di bawah 2 MB."
             onChange={setFotoBukti} />
 
           <div className="border-t border-slate-100 pt-5">

@@ -8,13 +8,19 @@ const KUALITAS = 0.8
 // Mengecilkan foto di browser sebelum diunggah: sisi terpanjang maksimal
 // 1600px, disimpan sebagai WebP (atau JPEG bila browser tidak mendukung WebP).
 // Melempar Error berbahasa Indonesia bila file tidak memenuhi syarat.
-export async function kompresGambar(file) {
+// Dipakai sebelum foto dibuka di jendela Potong foto, agar file yang salah
+// langsung ditolak.
+export function periksaFoto(file) {
   if (!TIPE_FOTO.includes(file.type)) {
     throw new Error('Format foto harus JPG, PNG, atau WebP.')
   }
   if (file.size > BATAS_FILE_ASLI) {
     throw new Error('Ukuran foto terlalu besar. Pilih foto di bawah 10 MB.')
   }
+}
+
+export async function kompresGambar(file) {
+  periksaFoto(file)
 
   const gambar = await createImageBitmap(file)
   const skala = Math.min(1, SISI_TERPANJANG / Math.max(gambar.width, gambar.height))
