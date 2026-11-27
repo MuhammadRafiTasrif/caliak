@@ -89,7 +89,7 @@ export default function Dashboard() {
         </Link>
       </section>
 
-      <section className="mt-4 grid gap-4 sm:grid-cols-3" aria-label="Ringkasan barang">
+      <section className="mt-4 grid grid-cols-3 gap-2 sm:gap-4" aria-label="Ringkasan barang">
         <Angka label="Barang stok menipis" nilai={ringkasan.menipis} ke="/admin/barang-masuk" tautan="Catat barang masuk"
           peringatan={ringkasan.menipis > 0} />
         <Angka label="Barang aktif" nilai={ringkasan.barang_aktif} ke="/admin/barang" tautan="Kelola barang" />
@@ -99,7 +99,7 @@ export default function Dashboard() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <section className="kartu" aria-labelledby="judul-terbaru">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-            <h2 id="judul-terbaru" className="font-semibold text-slate-900">5 permintaan terbaru</h2>
+            <h2 id="judul-terbaru" className="font-semibold text-slate-900">Permintaan terbaru</h2>
             <Link to="/admin/persetujuan" className="inline-flex min-h-11 items-center text-sm font-medium text-primer-700 hover:underline">
               Semua permintaan
             </Link>
@@ -160,10 +160,11 @@ export default function Dashboard() {
 
 function Angka({ label, nilai, ke, tautan, peringatan = false }) {
   return (
-    <Link to={ke} className="kartu group block p-4 hover:border-primer-200">
-      <p className="text-sm text-slate-600">{label}</p>
+    <Link to={ke} className="kartu group flex flex-col p-3 hover:border-primer-200 sm:p-4">
+      <p className="text-xs text-slate-600 sm:text-sm">{label}</p>
       <p className={`mt-1 text-2xl font-bold tabular-nums ${peringatan ? 'text-amber-900' : 'text-slate-900'}`}>{formatAngka(nilai)}</p>
-      <p className="mt-1 text-sm font-medium text-primer-700 group-hover:underline">{tautan}</p>
+      {/* Di HP tautan disembunyikan: seluruh kartu sudah bisa diklik. */}
+      <p className="mt-auto hidden pt-1 text-sm font-medium text-primer-700 group-hover:underline sm:block">{tautan}</p>
     </Link>
   )
 }

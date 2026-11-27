@@ -28,7 +28,7 @@ export function FotoBarang({ url, nama, className = 'h-12 w-12' }) {
 // dengan label di barang (lihat DESIGN.md, motif identitas).
 export function KodeBarang({ kode }) {
   return (
-    <span className="inline-block max-w-full break-all rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700">
+    <span className="inline-block whitespace-nowrap rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700">
       {kode}
     </span>
   )

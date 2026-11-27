@@ -131,9 +131,9 @@ export default function BuatPermintaan() {
       <form onSubmit={handleSubmit} noValidate className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
         <section className="kartu" aria-labelledby="judul-daftar">
           <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-            <h2 id="judul-daftar" className="font-semibold text-slate-900">Barang yang diminta ({keranjang.length})</h2>
-            <Link to="/katalog" className="inline-flex min-h-11 items-center text-sm font-medium text-primer-700 hover:underline">
-              Tambah barang lain
+            <h2 id="judul-daftar" className="font-semibold text-slate-900">Barang diminta ({keranjang.length})</h2>
+            <Link to="/katalog" className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-primer-700 hover:underline">
+              + Tambah barang
             </Link>
           </div>
           <ul className="divide-y divide-slate-100">

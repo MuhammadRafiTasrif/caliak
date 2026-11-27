@@ -6,7 +6,7 @@ export default function PageHeader({ judul, keterangan, aksi }) {
         <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">{judul}</h1>
         {keterangan && <p className="mt-1 text-sm text-slate-600">{keterangan}</p>}
       </div>
-      {aksi && <div className="flex flex-wrap gap-2">{aksi}</div>}
+      {aksi && <div className="flex flex-wrap gap-2 sm:shrink-0">{aksi}</div>}
     </div>
   )
 }

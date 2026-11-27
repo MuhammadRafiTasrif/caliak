@@ -173,8 +173,6 @@ export default function KelolaBarang() {
                 <tr>
                   <th scope="col" className="px-4 py-3 font-medium">Barang</th>
                   <th scope="col" className="px-4 py-3 font-medium">Stok</th>
-                  <th scope="col" className="px-4 py-3 font-medium">Kategori</th>
-                  <th scope="col" className="px-4 py-3 font-medium">Lokasi</th>
                   <th scope="col" className="px-4 py-3 text-right font-medium">Aksi</th>
                 </tr>
               </thead>
@@ -189,14 +187,16 @@ export default function KelolaBarang() {
                             {b.nama}
                             {!b.is_active && <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-xs font-medium text-slate-700">Nonaktif</span>}
                           </p>
-                          <KodeBarang kode={b.kode_unik} />
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-slate-600">
+                            <KodeBarang kode={b.kode_unik} />
+                            <span>{b.kategori?.nama || 'Tanpa kategori'}</span>
+                            {b.lokasi && <span>{b.lokasi}</span>}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3"><StokBarang barang={b} /></td>
-                    <td className="px-4 py-3 text-slate-700">{b.kategori?.nama || '-'}</td>
-                    <td className="px-4 py-3 text-slate-700">{b.lokasi || '-'}</td>
-                    <td className="px-4 py-3">
+                    <td className="whitespace-nowrap px-4 py-3"><StokBarang barang={b} /></td>
+                    <td className="whitespace-nowrap px-4 py-3">
                       <TombolAksi barang={b} {...aksi(b)} />
                     </td>
                   </tr>
@@ -272,7 +272,7 @@ export default function KelolaBarang() {
 
 function TombolAksi({ barang, ubah, koreksi, aktif }) {
   return (
-    <div className="flex flex-wrap gap-2 md:justify-end">
+    <div className="flex flex-wrap gap-2 md:flex-nowrap md:justify-end">
       <button type="button" className="btn-sekunder px-3" onClick={ubah}>Ubah</button>
       {barang.is_active && (
         <button type="button" className="btn-sekunder px-3" onClick={koreksi}>Koreksi stok</button>

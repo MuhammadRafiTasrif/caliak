@@ -46,6 +46,9 @@ for (const jalur of halaman) {
         const gaya = getComputedStyle(el)
         if (r.width === 0 || gaya.visibility === 'hidden') return false
         if (el.tagName === 'A' && gaya.display === 'inline') return false
+        // Kotak centang di dalam label: yang disentuh adalah seluruh label.
+        const label = el.closest('label')
+        if (label && label.getBoundingClientRect().height >= 44) return false
         return r.height < 44
       })
       .map((el) => `${el.tagName.toLowerCase()} "${(el.innerText || el.getAttribute('aria-label') || el.id).trim()}" ${Math.round(el.getBoundingClientRect().height)}px`),
