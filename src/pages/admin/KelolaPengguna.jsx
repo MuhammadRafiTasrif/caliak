@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { AlertTriangle, Search, UserCheck, Users } from 'lucide-react'
+import { AlertTriangle, Pencil, Search, UserCheck, Users } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Loading from '../../components/Loading'
 import Penomoran from '../../components/Penomoran'
 import ConfirmModal from '../../components/ConfirmModal'
+import Modal from '../../components/Modal'
+import FormAkun from '../../components/pengguna/FormAkun'
 import { useAuth } from '../../context/AuthContext'
 import { usePermintaan } from '../../context/PermintaanContext'
 import { pesanError } from '../../lib/supabaseClient'
@@ -55,7 +57,7 @@ const AKSI = {
 }
 
 export default function KelolaPengguna() {
-  const { user } = useAuth()
+  const { user, muatUlangProfil } = useAuth()
   const { muatUlangBadge } = usePermintaan()
   const [status, setStatus] = useState('menunggu')
   const [cari, setCari] = useState('')
@@ -68,6 +70,8 @@ export default function KelolaPengguna() {
   const [error, setError] = useState('')
   const [aksi, setAksi] = useState(null) // { jenis, pengguna }
   const [memproses, setMemproses] = useState(false)
+  const [diubah, setDiubah] = useState(null)
+  const [formSibuk, setFormSibuk] = useState(false)
 
   const muat = useCallback(async () => {
     setMemuat(true)
@@ -164,9 +168,12 @@ export default function KelolaPengguna() {
                     NIP {p.nip ?? '-'}, {p.unit_kerja ?? 'unit kerja belum diisi'}. Mendaftar {formatTanggal(p.created_at)}.
                   </p>
                 </div>
-                {p.id !== user.id && (
-                  <div className="flex shrink-0 flex-wrap gap-2">
-                    {!p.is_verified ? (
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <button type="button" className="btn-sekunder" onClick={() => setDiubah(p)}>
+                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                    Ubah
+                  </button>
+                  {p.id !== user.id && (!p.is_verified ? (
                       <button type="button" className="btn-primer" onClick={() => setAksi({ jenis: 'verifikasi', pengguna: p })}>
                         Verifikasi
                       </button>
@@ -185,15 +192,32 @@ export default function KelolaPengguna() {
                           Cabut verifikasi
                         </button>
                       </>
-                    )}
-                  </div>
-                )}
+                  ))}
+                </div>
               </li>
             ))}
           </ul>
           <Penomoran halaman={halaman} total={total} ukuran={UKURAN} onPindah={keHalaman} sibuk={memuat} label="Halaman daftar pengguna" />
         </>
       )}
+
+      <Modal terbuka={Boolean(diubah)} onTutup={() => setDiubah(null)} judul={diubah ? `Ubah akun ${diubah.nama}` : 'Ubah akun'}
+        lebar="max-w-xl" tutupDiLuar={false} terkunci={formSibuk}>
+        {diubah && (
+          <FormAkun
+            pengguna={diubah}
+            akunSendiri={diubah.id === user.id}
+            onSibuk={setFormSibuk}
+            onBatal={() => setDiubah(null)}
+            onSelesai={() => {
+              if (diubah.id === user.id) muatUlangProfil()
+              setDiubah(null)
+              muat()
+              muatUlangBadge()
+            }}
+          />
+        )}
+      </Modal>
 
       <ConfirmModal
         terbuka={Boolean(aksi)}

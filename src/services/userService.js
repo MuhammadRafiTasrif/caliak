@@ -31,9 +31,15 @@ export async function ambilDaftarPengguna({ status = '', cari = '', halaman = 1,
   return { data, total: count ?? 0 }
 }
 
-// perubahan: { is_verified } atau { role }
+// perubahan: sebagian dari { nama, nip, unit_kerja, role, is_verified }
 export async function ubahPengguna(id, perubahan) {
   const { error } = await supabase.from('profiles').update(perubahan).eq('id', id)
+  if (error) throw error
+}
+
+// Hanya admin. Lewat fungsi database karena aplikasi tidak memegang kunci service role.
+export async function aturUlangSandi(id, sandiBaru) {
+  const { error } = await supabase.rpc('atur_ulang_sandi', { p_user_id: id, p_sandi_baru: sandiBaru })
   if (error) throw error
 }
 

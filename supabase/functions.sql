@@ -497,6 +497,33 @@ BEGIN
 END;
 $$;
 
+-- Admin memberi kata sandi baru untuk akun pegawai yang lupa kata sandinya.
+-- Dilakukan di database karena aplikasi web tidak boleh memegang kunci
+-- service role yang dibutuhkan API admin Supabase.
+CREATE OR REPLACE FUNCTION atur_ulang_sandi(p_user_id UUID, p_sandi_baru TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, extensions
+AS $$
+BEGIN
+    PERFORM wajib_admin();
+
+    IF p_sandi_baru IS NULL OR length(p_sandi_baru) < 8 THEN
+        RAISE EXCEPTION 'Kata sandi baru minimal 8 karakter.';
+    END IF;
+
+    UPDATE auth.users
+    SET encrypted_password = extensions.crypt(p_sandi_baru, extensions.gen_salt('bf')),
+        updated_at = now()
+    WHERE id = p_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Akun tidak ditemukan.';
+    END IF;
+END;
+$$;
+
 -- Angka ringkasan Dashboard admin. Tanpa SECURITY DEFINER: RLS tetap
 -- berlaku, jadi hanya admin yang mendapat angka lengkap.
 CREATE OR REPLACE FUNCTION ringkasan_dashboard()
@@ -537,6 +564,7 @@ $$;
 -- Hak menjalankan fungsi: hanya pengguna yang sudah login.
 REVOKE EXECUTE ON FUNCTION
     ringkasan_dashboard(), barang_stok_menipis(INTEGER),
+    atur_ulang_sandi(UUID, TEXT),
     is_admin(), is_verified_user(), wajib_admin(),
     impor_barang(JSONB, JSONB),
     tambah_barang_masuk(UUID, INTEGER, TEXT, TEXT, TEXT, DATE),
@@ -549,6 +577,7 @@ FROM PUBLIC, anon;
 
 GRANT EXECUTE ON FUNCTION
     ringkasan_dashboard(), barang_stok_menipis(INTEGER),
+    atur_ulang_sandi(UUID, TEXT),
     is_admin(), is_verified_user(),
     impor_barang(JSONB, JSONB),
     tambah_barang_masuk(UUID, INTEGER, TEXT, TEXT, TEXT, DATE),
