@@ -3,7 +3,7 @@
 **Catatan Logistik Akurat dan Informasi Ketersediaan.** Aplikasi web untuk mengelola permintaan dan mutasi Barang Milik Negara (barang persediaan) di instansi.
 
 - Pegawai mengajukan permintaan barang dari katalog dan memantau statusnya.
-- Admin menyetujui atau menolak permintaan, lalu menandai selesai saat barang diserahkan. **Stok baru berkurang pada saat itu.**
+- Admin menyetujui atau menolak permintaan. **Permintaan yang disetujui dianggap langsung diserahkan, dan stok berkurang saat itu juga.**
 - Admin mencatat barang masuk, mengoreksi stok, dan mengimpor daftar barang dari Referensi Barang SAKTI (Excel).
 - Setiap perubahan stok dan status tercatat permanen dan bisa diekspor ke Excel.
 
@@ -87,7 +87,7 @@ Akun berikutnya diverifikasi admin lewat menu **Kelola Pengguna**.
 1. Pegawai mendaftar. Akun berstatus menunggu verifikasi sampai admin memverifikasinya.
 2. Pegawai memilih barang di **Katalog**, lalu **Buat Permintaan**. Nomor `REQ-TAHUN-0001` dibuat otomatis.
 3. Admin membuka **Persetujuan**: menyetujui (jumlah bisa dikurangi) atau menolak dengan alasan.
-4. Saat barang diserahkan, admin menekan **Tandai selesai**. Stok berkurang dan tercatat sebagai mutasi keluar.
+4. Permintaan yang disetujui dianggap langsung diserahkan: stok berkurang saat itu juga dan tercatat sebagai mutasi keluar. Permintaan yang sudah disetujui tidak bisa ditolak lagi.
 5. Pegawai melihat perubahan status di **Permintaan Saya** (ada angka penanda di menu).
 
 ## Impor barang dari SAKTI

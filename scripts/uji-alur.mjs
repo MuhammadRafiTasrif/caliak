@@ -1,5 +1,5 @@
-// Uji alur lengkap di browser: pemohon mengajukan, admin menyetujui dan
-// menyerahkan, lalu stok dicek berkurang. Screenshot tiap langkah disimpan
+// Uji alur lengkap di browser: pemohon mengajukan, admin menyetujui
+// (barang langsung diserahkan), lalu stok dicek berkurang. Screenshot tiap langkah disimpan
 // di screenshots/alur-*.png.
 //
 // Pemakaian (dev server harus sudah jalan):
@@ -83,13 +83,15 @@ try {
   console.log(`  permintaan dibuat: ${nomor}`)
   await foto(p, 'pemohon-permintaan-saya')
 
-  console.log('3. Admin: periksa dan setujui')
+  console.log('3. Admin: periksa dan setujui (langsung diserahkan)')
   const a = admin.page
   await a.goto(`${BASE}/admin/persetujuan`)
   await a.locator('tr', { hasText: nomor }).getByRole('button', { name: 'Periksa' }).click()
-  await a.getByRole('dialog').getByRole('button', { name: 'Setujui' }).waitFor()
+  const tombolSetujui = a.getByRole('dialog').getByRole('button', { name: 'Setujui dan serahkan' })
+  await tombolSetujui.waitFor()
   await foto(a, 'admin-periksa')
-  await a.getByRole('dialog').getByRole('button', { name: 'Setujui' }).click()
+  await tombolSetujui.click()
+  await foto(a, 'admin-konfirmasi-setujui')
   await a.getByRole('button', { name: 'Ya, setujui' }).click()
   await a.getByText(`${nomor} disetujui`).waitFor()
 
@@ -104,15 +106,7 @@ try {
   await p.getByRole('dialog').getByRole('heading', { name: 'Riwayat status' }).waitFor()
   await foto(p, 'pemohon-detail-disetujui')
 
-  console.log('5. Admin: serahkan dan tandai selesai')
-  await a.goto(`${BASE}/admin/persetujuan?status=disetujui`)
-  await a.locator('tr', { hasText: nomor }).getByRole('button', { name: 'Serahkan' }).click()
-  await a.getByRole('dialog').getByRole('button', { name: /Tandai selesai/ }).click()
-  await foto(a, 'admin-konfirmasi-serahkan')
-  await a.getByRole('button', { name: 'Ya, tandai selesai' }).click()
-  await a.getByText(`${nomor} selesai`).waitFor()
-
-  console.log('6. Admin: cek stok sesudah')
+  console.log('5. Admin: cek stok sesudah disetujui')
   const stokAkhir = await stokBarang(a)
   console.log(`  stok ${BARANG}: ${stokAwal} menjadi ${stokAkhir}`)
   await foto(a, 'admin-stok-sesudah')
@@ -120,7 +114,7 @@ try {
   await a.locator('tr', { hasText: nomor }).first().waitFor()
   await foto(a, 'admin-riwayat-mutasi')
 
-  console.log(stokAkhir === stokAwal - 2 ? '\nLOLOS: stok berkurang 2 tepat saat diserahkan.' : `\nGAGAL: stok seharusnya ${stokAwal - 2}.`)
+  console.log(stokAkhir === stokAwal - 2 ? '\nLOLOS: stok berkurang 2 tepat saat disetujui.' : `\nGAGAL: stok seharusnya ${stokAwal - 2}.`)
 } catch (err) {
   console.log(`\nGAGAL: ${err.message}`)
   process.exitCode = 1

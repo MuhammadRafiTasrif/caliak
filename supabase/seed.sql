@@ -6,13 +6,38 @@
 --            pegawai1@caliak.test  / Pegawai12345 (pemohon)
 --            pegawai2@caliak.test  / Pegawai12345 (pemohon)
 --   5 kategori, 15 barang (nama dari Referensi Barang SAKTI),
---   4 permintaan: menunggu, disetujui, selesai, ditolak.
+--   4 permintaan: 1 menunggu, 2 disetujui (stok sudah berkurang), 1 ditolak.
 --
 -- Data ditulis langsung ke tabel (bukan lewat fungsi RPC, karena SQL Editor
 -- tidak login sebagai admin), tetapi saldo stok dan mutasinya dibuat saling
 -- cocok seperti bila dicatat lewat aplikasi.
 --
 -- Ganti kata sandi akun contoh, atau hapus akunnya, sebelum aplikasi dipakai sungguhan.
+
+-- Pembantu sementara: kurangi stok untuk permintaan yang disetujui dan catat
+-- mutasi keluarnya, sama seperti yang dilakukan ubah_status_permintaan.
+-- Dihapus lagi di akhir file.
+CREATE OR REPLACE FUNCTION seed_kurangi_stok(p_req UUID, p_admin UUID, p_hari_lalu INTEGER)
+RETURNS VOID
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_b     RECORD;
+    v_nomor TEXT := (SELECT nomor FROM requests WHERE id = p_req);
+BEGIN
+    FOR v_b IN
+        SELECT i.id, i.stok, ri.jumlah_disetujui AS jumlah
+        FROM request_items ri JOIN items i ON i.id = ri.item_id
+        WHERE ri.request_id = p_req AND ri.jumlah_disetujui > 0
+    LOOP
+        INSERT INTO stock_movements (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, tanggal,
+                                     request_id, catatan, created_by, created_at)
+        VALUES (v_b.id, 'keluar', -v_b.jumlah, v_b.stok, v_b.stok - v_b.jumlah, hari_ini() - p_hari_lalu,
+                p_req, 'Disetujui dan diserahkan ' || v_nomor, p_admin, now() - make_interval(days => p_hari_lalu));
+        UPDATE items SET stok = v_b.stok - v_b.jumlah WHERE id = v_b.id;
+    END LOOP;
+END;
+$$;
 
 DO $$
 DECLARE
@@ -110,7 +135,22 @@ BEGIN
     INSERT INTO request_status_logs (request_id, status, catatan, changed_by, created_at)
     VALUES (v_req, 'menunggu', 'Permintaan diajukan', v_peg1, now() - interval '1 hour');
 
-    -- Permintaan 2: disetujui, tinta disetujui sebagian karena stoknya tinggal 1.
+    -- Permintaan 2 dan 3: disetujui. Disetujui berarti langsung diserahkan,
+    -- jadi stok berkurang dan tercatat sebagai mutasi keluar.
+    -- Permintaan 3 lebih dulu (7 hari lalu) agar urutan saldo di riwayat runtut.
+    INSERT INTO requests (nomor, requester_id, keperluan, tanggal_dibutuhkan, status, handled_by,
+                          created_at, updated_at)
+    VALUES ('REQ-' || v_tahun || '-0003', v_peg1, 'Surat undangan dan ATK pelatihan petugas',
+            hari_ini() - 5, 'disetujui', v_admin, now() - interval '7 days', now() - interval '6 days')
+    RETURNING id INTO v_req;
+    INSERT INTO request_items (request_id, item_id, jumlah_diminta, jumlah_disetujui)
+    SELECT v_req, id, j, j
+    FROM items JOIN (VALUES ('Amplop Dinas Kecil Berkop BPS', 50), ('Ballpoint Pilot', 10)) AS x(n, j) ON x.n = items.nama;
+    INSERT INTO request_status_logs (request_id, status, catatan, changed_by, created_at) VALUES
+        (v_req, 'menunggu', 'Permintaan diajukan', v_peg1, now() - interval '7 days'),
+        (v_req, 'disetujui', NULL, v_admin, now() - interval '6 days');
+    PERFORM seed_kurangi_stok(v_req, v_admin, 6);
+
     INSERT INTO requests (nomor, requester_id, keperluan, tanggal_dibutuhkan, status, catatan_admin,
                           handled_by, ada_pembaruan, created_at, updated_at)
     VALUES ('REQ-' || v_tahun || '-0002', v_peg2, 'Pengolahan dokumen survei di ruang produksi',
@@ -125,32 +165,7 @@ BEGIN
     INSERT INTO request_status_logs (request_id, status, catatan, changed_by, created_at) VALUES
         (v_req, 'menunggu', 'Permintaan diajukan', v_peg2, now() - interval '1 day'),
         (v_req, 'disetujui', 'Tinta Cyan tersisa 1, disetujui 1.', v_admin, now() - interval '20 hours');
-
-    -- Permintaan 3: selesai. Stok berkurang dan tercatat sebagai mutasi keluar.
-    INSERT INTO requests (nomor, requester_id, keperluan, tanggal_dibutuhkan, status, handled_by,
-                          created_at, updated_at)
-    VALUES ('REQ-' || v_tahun || '-0003', v_peg1, 'Surat undangan dan ATK pelatihan petugas',
-            hari_ini() - 5, 'selesai', v_admin, now() - interval '7 days', now() - interval '5 days')
-    RETURNING id INTO v_req;
-    INSERT INTO request_items (request_id, item_id, jumlah_diminta, jumlah_disetujui)
-    SELECT v_req, id, j, j
-    FROM items JOIN (VALUES ('Amplop Dinas Kecil Berkop BPS', 50), ('Ballpoint Pilot', 10)) AS x(n, j) ON x.n = items.nama;
-    INSERT INTO request_status_logs (request_id, status, catatan, changed_by, created_at) VALUES
-        (v_req, 'menunggu', 'Permintaan diajukan', v_peg1, now() - interval '7 days'),
-        (v_req, 'disetujui', NULL, v_admin, now() - interval '6 days'),
-        (v_req, 'selesai', 'Barang sudah diserahkan', v_admin, now() - interval '5 days');
-
-    FOR v_barang IN
-        SELECT i.id, i.stok, ri.jumlah_disetujui AS jumlah
-        FROM request_items ri JOIN items i ON i.id = ri.item_id
-        WHERE ri.request_id = v_req
-    LOOP
-        INSERT INTO stock_movements (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, tanggal,
-                                     request_id, catatan, created_by, created_at)
-        VALUES (v_barang.id, 'keluar', -v_barang.jumlah, v_barang.stok, v_barang.stok - v_barang.jumlah,
-                hari_ini() - 5, v_req, 'Penyerahan REQ-' || v_tahun || '-0003', v_admin, now() - interval '5 days');
-        UPDATE items SET stok = v_barang.stok - v_barang.jumlah WHERE id = v_barang.id;
-    END LOOP;
+    PERFORM seed_kurangi_stok(v_req, v_admin, 1);
 
     -- Permintaan 4: ditolak karena stok kosong.
     INSERT INTO requests (nomor, requester_id, keperluan, tanggal_dibutuhkan, status, catatan_admin,
@@ -169,3 +184,5 @@ BEGIN
 
     RAISE NOTICE 'Data contoh dibuat. Masuk dengan admin@caliak.test / Admin12345.';
 END $$;
+
+DROP FUNCTION seed_kurangi_stok(UUID, UUID, INTEGER);

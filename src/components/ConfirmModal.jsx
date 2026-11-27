@@ -7,7 +7,7 @@ const KELAS_TOMBOL = {
   sukses: 'btn-sukses',
 }
 
-// Konfirmasi sebelum aksi penting (setujui, tolak, selesai, koreksi stok,
+// Konfirmasi sebelum aksi penting (setujui, tolak, koreksi stok,
 // nonaktifkan barang). `children` untuk isian tambahan, misalnya alasan.
 export default function ConfirmModal({
   terbuka,

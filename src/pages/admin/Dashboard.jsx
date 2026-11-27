@@ -81,9 +81,9 @@ export default function Dashboard() {
         <Link to="/admin/persetujuan?status=disetujui"
           className="kartu group flex items-center justify-between gap-4 p-5 hover:border-primer-200">
           <div>
-            <p className="text-sm text-slate-600">Disetujui, menunggu diserahkan</p>
-            <p className="mt-1 text-4xl font-bold tabular-nums text-slate-900">{formatAngka(ringkasan.disetujui)}</p>
-            <p className="mt-2 text-sm font-medium text-primer-700 group-hover:underline">Buka daftar penyerahan</p>
+            <p className="text-sm text-slate-600">Disetujui dan diserahkan bulan ini</p>
+            <p className="mt-1 text-4xl font-bold tabular-nums text-slate-900">{formatAngka(ringkasan.disetujui_bulan_ini ?? 0)}</p>
+            <p className="mt-2 text-sm font-medium text-primer-700 group-hover:underline">Lihat permintaan disetujui</p>
           </div>
           <PackageCheck className="h-10 w-10 shrink-0 text-slate-400" aria-hidden="true" />
         </Link>

@@ -13,7 +13,7 @@ export default function AuthShell({ judul, keterangan, children }) {
             Permintaan dan mutasi Barang Milik Negara, tercatat di satu tempat.
           </h2>
           <p className="mt-4 text-primer-100">
-            Barang baru berkurang dari stok saat diserahkan, dan setiap perubahan dicatat bersama saldo sebelum dan
+            Stok berkurang saat permintaan disetujui, dan setiap perubahan dicatat bersama saldo sebelum dan
             sesudahnya.
           </p>
         </div>

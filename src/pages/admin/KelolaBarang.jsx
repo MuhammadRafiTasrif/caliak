@@ -94,7 +94,7 @@ export default function KelolaBarang() {
     <>
       <PageHeader
         judul="Kelola Barang"
-        keterangan="Tambah dan ubah data barang. Stok hanya berubah lewat Barang Masuk, Koreksi stok, dan penyerahan permintaan."
+        keterangan="Tambah dan ubah data barang. Stok hanya berubah lewat Barang Masuk, Koreksi stok, dan persetujuan permintaan."
         aksi={
           <>
             <Link to="/admin/barang/impor" className="btn-sekunder">

@@ -118,7 +118,7 @@ export default function BuatPermintaan() {
     <>
       <PageHeader
         judul="Buat Permintaan"
-        keterangan="Stok belum berkurang saat permintaan diajukan. Stok baru berkurang ketika barang diserahkan."
+        keterangan="Admin memeriksa permintaan Anda. Setelah disetujui, barang bisa diambil dan stok berkurang."
       />
 
       {errorSegar && (

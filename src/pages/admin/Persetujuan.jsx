@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { AlertTriangle, CheckCheck, ClipboardCheck, PackageCheck, X } from 'lucide-react'
+import { AlertTriangle, CheckCheck, ClipboardCheck, X } from 'lucide-react'
 import PageHeader from '../../components/PageHeader'
 import EmptyState from '../../components/EmptyState'
 import Loading from '../../components/Loading'
@@ -14,18 +14,13 @@ import { KepalaPermintaan, RincianBarang, ringkasBarang } from '../../components
 import { KodeBarang } from '../../components/barang/TampilanBarang'
 import { usePermintaan } from '../../context/PermintaanContext'
 import { pesanError } from '../../lib/supabaseClient'
-import {
-  ambilDaftarPermintaan,
-  ambilPermintaan,
-  selesaikanPermintaan,
-  setujuiPermintaan,
-  tolakPermintaan,
-} from '../../services/requestService'
+import { ambilDaftarPermintaan, ambilPermintaan, setujuiPermintaan, tolakPermintaan } from '../../services/requestService'
 import { formatAngka, formatTanggal } from '../../utils/format'
 import useHalaman from '../../utils/useHalaman'
 
 const UKURAN = 20
-const FILTER_STATUS = ['menunggu', 'disetujui', 'selesai', 'ditolak', 'dibatalkan', '']
+// Status 'selesai' hanya ada pada data lama dan tetap tampil di tab Semua.
+const FILTER_STATUS = ['menunggu', 'disetujui', 'ditolak', 'dibatalkan', '']
 
 export default function Persetujuan() {
   const { menunggu, muatUlangBadge } = usePermintaan()
@@ -74,7 +69,7 @@ export default function Persetujuan() {
     <>
       <PageHeader
         judul="Persetujuan"
-        keterangan="Setujui atau tolak permintaan, lalu tandai selesai saat barang diserahkan. Stok berkurang saat ditandai selesai."
+        keterangan="Setujui atau tolak permintaan. Permintaan yang disetujui dianggap sudah diserahkan: stok langsung berkurang."
       />
 
       <div className="mb-4 flex flex-wrap gap-2" role="tablist" aria-label="Filter status">
@@ -193,21 +188,21 @@ export default function Persetujuan() {
 }
 
 function TombolBuka({ permintaan, onBuka, penuh = false }) {
-  const perluAksi = permintaan.status === 'menunggu' || permintaan.status === 'disetujui'
+  const menunggu = permintaan.status === 'menunggu'
   return (
-    <button type="button" onClick={onBuka} className={`${perluAksi ? 'btn-primer' : 'btn-sekunder'} ${penuh ? 'w-full' : ''}`}>
-      {permintaan.status === 'menunggu' ? 'Periksa' : permintaan.status === 'disetujui' ? 'Serahkan' : 'Lihat'}
+    <button type="button" onClick={onBuka} className={`${menunggu ? 'btn-primer' : 'btn-sekunder'} ${penuh ? 'w-full' : ''}`}>
+      {menunggu ? 'Periksa' : 'Lihat'}
     </button>
   )
 }
 
-// Detail satu permintaan beserta aksi sesuai statusnya.
+// Detail satu permintaan. Aksi hanya tersedia selama statusnya menunggu.
 function DetailPersetujuan({ id, onTutup, onSelesai }) {
   const [p, setP] = useState(null)
   const [error, setError] = useState('')
   const [jumlah, setJumlah] = useState({})
   const [catatan, setCatatan] = useState('')
-  const [aksi, setAksi] = useState(null) // 'setujui' | 'tolak' | 'selesai'
+  const [aksi, setAksi] = useState(null) // 'setujui' | 'tolak'
   const [alasanTolak, setAlasanTolak] = useState('')
   const [memproses, setMemproses] = useState(false)
 
@@ -226,13 +221,10 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
     try {
       if (aksi === 'setujui') {
         await setujuiPermintaan(p.id, p.rincian.map((r) => ({ item_id: r.item_id, jumlah: Number(jumlah[r.item_id]) })), catatan.trim())
-        toast.success(`${p.nomor} disetujui. Tandai selesai saat barang diserahkan.`)
+        toast.success(`${p.nomor} disetujui. Stok barang sudah dikurangi.`)
       } else if (aksi === 'tolak') {
         await tolakPermintaan(p.id, alasanTolak.trim())
         toast.success(`${p.nomor} ditolak.`)
-      } else if (aksi === 'selesai') {
-        await selesaikanPermintaan(p.id, catatan.trim())
-        toast.success(`${p.nomor} selesai. Stok barang sudah dikurangi.`)
       }
       onSelesai()
     } catch (err) {
@@ -243,8 +235,9 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
     }
   }
 
+  const menunggu = p?.status === 'menunggu'
   const galatJumlah = {}
-  if (p?.status === 'menunggu') {
+  if (menunggu) {
     for (const r of p.rincian) {
       const n = Number(jumlah[r.item_id])
       if (jumlah[r.item_id] === '' || !Number.isInteger(n) || n < 0) galatJumlah[r.item_id] = 'Isi 0 atau lebih.'
@@ -254,7 +247,7 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
   }
   const totalDisetujui = p ? p.rincian.reduce((s, r) => s + (Number(jumlah[r.item_id]) || 0), 0) : 0
   const bisaSetujui = p && Object.keys(galatJumlah).length === 0 && totalDisetujui > 0
-  const stokKurang = p?.status === 'disetujui' ? p.rincian.filter((r) => (r.jumlah_disetujui ?? 0) > (r.barang?.stok ?? 0)) : []
+  const akanDiserahkan = p ? p.rincian.filter((r) => Number(jumlah[r.item_id]) > 0) : []
 
   return (
     <>
@@ -269,7 +262,7 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
 
             <section>
               <h3 className="mb-2 text-sm font-semibold text-slate-900">Barang</h3>
-              {p.status === 'menunggu' ? (
+              {menunggu ? (
                 <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
                   {p.rincian.map((r) => (
                     <li key={r.id} className="grid gap-3 px-4 py-3 text-sm sm:grid-cols-[1fr_auto] sm:items-center">
@@ -297,13 +290,6 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
               ) : (
                 <RincianBarang rincian={p.rincian} />
               )}
-              {stokKurang.length > 0 && (
-                <p className="mt-2 flex items-start gap-2 text-sm text-red-700" role="alert">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                  Stok {stokKurang.map((r) => r.barang?.nama).join(', ')} tidak cukup untuk diserahkan. Catat barang masuk dulu,
-                  atau tolak permintaan ini.
-                </p>
-              )}
             </section>
 
             <section>
@@ -311,32 +297,23 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
               <RiwayatStatus requestId={p.id} pemohonId={p.requester_id} />
             </section>
 
-            {(p.status === 'menunggu' || p.status === 'disetujui') && (
+            {menunggu && (
               <section className="space-y-3 border-t border-slate-100 pt-4">
                 <div>
-                  <label htmlFor="catatan" className="label">
-                    {p.status === 'menunggu' ? 'Catatan untuk pemohon (opsional)' : 'Catatan penyerahan (opsional)'}
-                  </label>
+                  <label htmlFor="catatan" className="label">Catatan untuk pemohon (opsional)</label>
                   <textarea id="catatan" rows={2} value={catatan} onChange={(e) => setCatatan(e.target.value)} className="input"
-                    placeholder={p.status === 'menunggu' ? 'Contoh: ambil di ruang Subbagian Umum' : 'Contoh: diterima langsung oleh pemohon'} />
+                    placeholder="Contoh: ambil di ruang Subbagian Umum" />
                 </div>
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <button type="button" className="btn-sekunder text-red-700" onClick={() => setAksi('tolak')}>
                     Tolak permintaan
                   </button>
-                  {p.status === 'menunggu' ? (
-                    <button type="button" className="btn-primer" onClick={() => setAksi('setujui')} disabled={!bisaSetujui}>
-                      <CheckCheck className="h-4 w-4" aria-hidden="true" />
-                      Setujui
-                    </button>
-                  ) : (
-                    <button type="button" className="btn-sukses" onClick={() => setAksi('selesai')} disabled={stokKurang.length > 0}>
-                      <PackageCheck className="h-4 w-4" aria-hidden="true" />
-                      Tandai selesai (barang diserahkan)
-                    </button>
-                  )}
+                  <button type="button" className="btn-primer" onClick={() => setAksi('setujui')} disabled={!bisaSetujui}>
+                    <CheckCheck className="h-4 w-4" aria-hidden="true" />
+                    Setujui dan serahkan
+                  </button>
                 </div>
-                {p.status === 'menunggu' && !bisaSetujui && Object.keys(galatJumlah).length === 0 && (
+                {!bisaSetujui && Object.keys(galatJumlah).length === 0 && (
                   <p className="text-right text-sm text-slate-600">Semua jumlah 0. Tolak permintaan bila tidak ada yang bisa diberikan.</p>
                 )}
               </section>
@@ -350,14 +327,27 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
           <ConfirmModal
             terbuka={aksi === 'setujui'}
             judul={`Setujui ${p.nomor}?`}
-            pesan={`${p.rincian.filter((r) => Number(jumlah[r.item_id]) > 0).length} dari ${p.rincian.length} barang disetujui${
-              p.rincian.some((r) => Number(jumlah[r.item_id]) < r.jumlah_diminta) ? ', sebagian dengan jumlah yang disesuaikan' : ''
-            }. Stok belum berkurang sampai permintaan ditandai selesai.`}
             labelKonfirmasi="Ya, setujui"
             memproses={memproses}
             onKonfirmasi={jalankan}
             onBatal={() => setAksi(null)}
-          />
+          >
+            <p className="text-sm text-slate-700">
+              Barang dianggap langsung diserahkan. Stok berikut berkurang dan tercatat sebagai mutasi keluar:
+            </p>
+            <ul className="mt-2 space-y-1 text-sm">
+              {akanDiserahkan.map((r) => (
+                <li key={r.id} className="flex justify-between gap-3">
+                  <span className="text-slate-900">
+                    {r.barang?.nama} ({formatAngka(Number(jumlah[r.item_id]))} {r.barang?.satuan})
+                  </span>
+                  <span className="shrink-0 tabular-nums text-slate-700">
+                    {formatAngka(r.barang?.stok ?? 0)} menjadi {formatAngka((r.barang?.stok ?? 0) - Number(jumlah[r.item_id]))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </ConfirmModal>
 
           <ConfirmModal
             terbuka={aksi === 'tolak'}
@@ -372,28 +362,6 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
           >
             <label htmlFor="alasanTolak" className="label">Alasan penolakan (wajib)</label>
             <textarea id="alasanTolak" rows={3} value={alasanTolak} onChange={(e) => setAlasanTolak(e.target.value)} className="input" />
-          </ConfirmModal>
-
-          <ConfirmModal
-            terbuka={aksi === 'selesai'}
-            judul="Barang sudah diserahkan?"
-            labelKonfirmasi="Ya, tandai selesai"
-            varian="sukses"
-            memproses={memproses}
-            onKonfirmasi={jalankan}
-            onBatal={() => setAksi(null)}
-          >
-            <p className="text-sm text-slate-700">Stok berikut akan dikurangi dan tercatat sebagai mutasi keluar:</p>
-            <ul className="mt-2 space-y-1 text-sm">
-              {p.rincian.filter((r) => r.jumlah_disetujui > 0).map((r) => (
-                <li key={r.id} className="flex justify-between gap-3">
-                  <span className="text-slate-900">{r.barang?.nama}</span>
-                  <span className="shrink-0 tabular-nums text-slate-700">
-                    {formatAngka(r.barang?.stok ?? 0)} menjadi {formatAngka((r.barang?.stok ?? 0) - r.jumlah_disetujui)}
-                  </span>
-                </li>
-              ))}
-            </ul>
           </ConfirmModal>
         </>
       )}

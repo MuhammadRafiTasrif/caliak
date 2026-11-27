@@ -27,6 +27,7 @@ export async function batalkanPermintaan(id, catatan) {
   if (error) throw error
 }
 
+// Disetujui berarti langsung diserahkan: stok berkurang di dalam fungsi database.
 // jumlah: [{ item_id, jumlah }]
 export async function setujuiPermintaan(id, jumlah, catatan) {
   const { error } = await supabase.rpc('ubah_status_permintaan', {
@@ -44,11 +45,6 @@ export async function tolakPermintaan(id, alasan) {
     p_status_baru: 'ditolak',
     p_catatan: alasan,
   })
-  if (error) throw error
-}
-
-export async function selesaikanPermintaan(id, catatan) {
-  const { error } = await supabase.rpc('selesaikan_permintaan', { p_request_id: id, p_catatan: catatan || null })
   if (error) throw error
 }
 

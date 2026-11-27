@@ -208,7 +208,7 @@ function TabMutasi() {
       ) : daftar.length === 0 ? (
         <div className="kartu">
           <EmptyState ikon={History} judul={adaFilter ? 'Tidak ada mutasi yang cocok' : 'Belum ada mutasi'}
-            pesan={adaFilter ? 'Ubah atau hapus filter.' : 'Mutasi tercatat otomatis dari Barang Masuk, Koreksi stok, dan penyerahan permintaan.'} />
+            pesan={adaFilter ? 'Ubah atau hapus filter.' : 'Mutasi tercatat otomatis dari Barang Masuk, Koreksi stok, dan persetujuan permintaan.'} />
         </div>
       ) : (
         <>

@@ -264,13 +264,16 @@ BEGIN
 END;
 $$;
 
--- Admin menyetujui atau menolak permintaan.
+-- Admin menyetujui atau menolak permintaan yang masih menunggu.
 --   p_status_baru: 'disetujui' atau 'ditolak'
 --   p_jumlah_disetujui (opsional, hanya untuk 'disetujui'):
 --     [{"item_id": "...", "jumlah": 1}, ...]
 --     Barang yang tidak disebut disetujui sebesar jumlah yang diminta.
--- Status 'selesai' lewat selesaikan_permintaan, 'dibatalkan' lewat
--- batalkan_permintaan.
+-- Disetujui berarti barang langsung diserahkan: stok berkurang saat itu
+-- juga dan tercatat sebagai mutasi keluar. Gagal seluruhnya (tidak ada
+-- yang berubah) bila salah satu stok tidak cukup.
+-- Status 'dibatalkan' lewat batalkan_permintaan. Status 'selesai' hanya
+-- ada pada data lama, dari versi yang masih memisahkan penyerahan.
 CREATE OR REPLACE FUNCTION ubah_status_permintaan(
     p_request_id       UUID,
     p_status_baru      TEXT,
@@ -284,11 +287,12 @@ SET search_path = public
 AS $$
 DECLARE
     v_status TEXT;
+    v_nomor  TEXT;
     v_baris  RECORD;
 BEGIN
     PERFORM wajib_admin();
 
-    SELECT status INTO v_status FROM requests WHERE id = p_request_id FOR UPDATE;
+    SELECT status, nomor INTO v_status, v_nomor FROM requests WHERE id = p_request_id FOR UPDATE;
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Permintaan tidak ditemukan.';
     END IF;
@@ -327,9 +331,33 @@ BEGIN
             RAISE EXCEPTION 'Minimal satu barang harus disetujui. Jika tidak ada, tolak permintaan ini.';
         END IF;
 
+        -- Penyerahan: kurangi stok. Baris barang dikunci berurutan menurut id
+        -- agar tidak saling menunggu (deadlock) dengan transaksi lain, dan
+        -- stok dicek ulang setelah dikunci.
+        FOR v_baris IN
+            SELECT ri.item_id, ri.jumlah_disetujui AS jumlah, i.nama, i.stok
+            FROM request_items ri JOIN items i ON i.id = ri.item_id
+            WHERE ri.request_id = p_request_id AND ri.jumlah_disetujui > 0
+            ORDER BY ri.item_id
+            FOR UPDATE OF i
+        LOOP
+            IF v_baris.stok < v_baris.jumlah THEN
+                RAISE EXCEPTION 'Stok "%" tidak cukup: tersedia %, disetujui %.',
+                    v_baris.nama, v_baris.stok, v_baris.jumlah;
+            END IF;
+
+            UPDATE items SET stok = v_baris.stok - v_baris.jumlah WHERE id = v_baris.item_id;
+
+            INSERT INTO stock_movements
+                (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, tanggal, request_id, catatan, created_by)
+            VALUES
+                (v_baris.item_id, 'keluar', -v_baris.jumlah, v_baris.stok, v_baris.stok - v_baris.jumlah,
+                 hari_ini(), p_request_id, 'Disetujui dan diserahkan ' || v_nomor, auth.uid());
+        END LOOP;
+
     ELSIF p_status_baru = 'ditolak' THEN
-        IF v_status NOT IN ('menunggu', 'disetujui') THEN
-            RAISE EXCEPTION 'Permintaan berstatus % tidak bisa ditolak.', v_status;
+        IF v_status <> 'menunggu' THEN
+            RAISE EXCEPTION 'Hanya permintaan berstatus menunggu yang bisa ditolak.';
         END IF;
         IF p_catatan IS NULL OR length(trim(p_catatan)) = 0 THEN
             RAISE EXCEPTION 'Alasan penolakan wajib diisi.';
@@ -351,65 +379,9 @@ BEGIN
 END;
 $$;
 
--- Admin menyerahkan barang. Di sinilah stok berkurang.
--- Gagal seluruhnya (tidak ada yang berubah) bila salah satu stok kurang.
-CREATE OR REPLACE FUNCTION selesaikan_permintaan(
-    p_request_id UUID,
-    p_catatan    TEXT DEFAULT NULL
-)
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-    v_status TEXT;
-    v_nomor  TEXT;
-    v_baris  RECORD;
-BEGIN
-    PERFORM wajib_admin();
-
-    SELECT status, nomor INTO v_status, v_nomor
-    FROM requests WHERE id = p_request_id FOR UPDATE;
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Permintaan tidak ditemukan.';
-    END IF;
-    IF v_status <> 'disetujui' THEN
-        RAISE EXCEPTION 'Hanya permintaan yang sudah disetujui yang bisa diselesaikan.';
-    END IF;
-
-    -- Kunci baris barang berurutan menurut id agar tidak saling menunggu
-    -- (deadlock) dengan transaksi lain.
-    FOR v_baris IN
-        SELECT ri.item_id, ri.jumlah_disetujui AS jumlah, i.nama, i.stok
-        FROM request_items ri JOIN items i ON i.id = ri.item_id
-        WHERE ri.request_id = p_request_id AND ri.jumlah_disetujui > 0
-        ORDER BY ri.item_id
-        FOR UPDATE OF i
-    LOOP
-        IF v_baris.stok < v_baris.jumlah THEN
-            RAISE EXCEPTION 'Stok "%" tidak cukup: tersedia %, dibutuhkan %.',
-                v_baris.nama, v_baris.stok, v_baris.jumlah;
-        END IF;
-
-        UPDATE items SET stok = v_baris.stok - v_baris.jumlah WHERE id = v_baris.item_id;
-
-        INSERT INTO stock_movements
-            (item_id, jenis, jumlah, saldo_sebelum, saldo_sesudah, tanggal, request_id, catatan, created_by)
-        VALUES
-            (v_baris.item_id, 'keluar', -v_baris.jumlah, v_baris.stok, v_baris.stok - v_baris.jumlah,
-             hari_ini(), p_request_id, 'Penyerahan ' || v_nomor, auth.uid());
-    END LOOP;
-
-    UPDATE requests
-    SET status = 'selesai', handled_by = auth.uid(), ada_pembaruan = true
-    WHERE id = p_request_id;
-
-    INSERT INTO request_status_logs (request_id, status, catatan, changed_by)
-    VALUES (p_request_id, 'selesai',
-            COALESCE(NULLIF(trim(p_catatan), ''), 'Barang sudah diserahkan'), auth.uid());
-END;
-$$;
+-- Versi lama memisahkan "disetujui" dan "diserahkan". Sekarang penyerahan
+-- terjadi di ubah_status_permintaan, jadi fungsi lama ini dihapus.
+DROP FUNCTION IF EXISTS selesaikan_permintaan(UUID, TEXT);
 
 -- Hilangkan badge notifikasi setelah pemohon membuka "Permintaan Saya".
 CREATE OR REPLACE FUNCTION tandai_permintaan_dilihat()
@@ -535,7 +507,9 @@ SET search_path = public
 AS $$
     SELECT jsonb_build_object(
         'menunggu', (SELECT count(*) FROM requests WHERE status = 'menunggu'),
-        'disetujui', (SELECT count(*) FROM requests WHERE status = 'disetujui'),
+        'disetujui_bulan_ini', (SELECT count(*) FROM request_status_logs
+                                WHERE status = 'disetujui'
+                                  AND created_at >= date_trunc('month', hari_ini()) AT TIME ZONE 'Asia/Jakarta'),
         'menipis', (SELECT count(*) FROM items
                     WHERE is_active AND stok_minimum > 0 AND stok <= stok_minimum),
         'barang_aktif', (SELECT count(*) FROM items WHERE is_active),
@@ -570,7 +544,6 @@ REVOKE EXECUTE ON FUNCTION
     buat_permintaan(TEXT, DATE, JSONB),
     batalkan_permintaan(UUID, TEXT),
     ubah_status_permintaan(UUID, TEXT, TEXT, JSONB),
-    selesaikan_permintaan(UUID, TEXT),
     tandai_permintaan_dilihat()
 FROM PUBLIC, anon;
 
@@ -583,7 +556,6 @@ GRANT EXECUTE ON FUNCTION
     buat_permintaan(TEXT, DATE, JSONB),
     batalkan_permintaan(UUID, TEXT),
     ubah_status_permintaan(UUID, TEXT, TEXT, JSONB),
-    selesaikan_permintaan(UUID, TEXT),
     tandai_permintaan_dilihat()
 TO authenticated;
 
