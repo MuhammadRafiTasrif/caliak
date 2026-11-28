@@ -29,7 +29,7 @@ export default function PotongFoto({ sumber, bentukAwal = 'persegi', memproses, 
   return (
     <Modal terbuka onTutup={onBatal} judul="Potong foto" lebar="max-w-2xl" tutupDiLuar={false} terkunci={memproses}
       keterangan="Geser foto untuk mengatur bagian yang dipakai. Di HP, cubit layar untuk memperbesar.">
-      <div className="relative h-[52vh] max-h-[420px] min-h-[260px] overflow-hidden rounded-lg bg-slate-900">
+      <div className="relative h-[52vh] max-h-[420px] min-h-[260px] overflow-hidden rounded-lg bg-neutral-900">
         <Cropper
           image={sumber}
           crop={posisi}
@@ -64,7 +64,7 @@ export default function PotongFoto({ sumber, bentukAwal = 'persegi', memproses, 
           {BENTUK.map((b) => (
             <button key={b.kunci} type="button" aria-pressed={bentuk === b.kunci} onClick={() => setBentuk(b.kunci)}
               className={`min-h-11 rounded-lg px-4 text-sm font-medium ${
-                bentuk === b.kunci ? 'bg-primer-700 text-white' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                bentuk === b.kunci ? 'pilihan-aktif' : 'pilihan-pasif'
               }`}>
               {b.label}
             </button>

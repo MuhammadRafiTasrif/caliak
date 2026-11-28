@@ -130,7 +130,7 @@ export default function ImporBarang() {
       <>
         <PageHeader judul="Impor barang dari Excel" aksi={tombolKembali} />
         <div className="kartu flex flex-col items-center px-6 py-10 text-center">
-          <CheckCircle2 className="h-10 w-10 text-emerald-700" aria-hidden="true" />
+          <CheckCircle2 className="h-10 w-10 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
           <p className="mt-3 text-lg font-semibold text-slate-900">{formatAngka(hasil.baru)} barang berhasil diimpor</p>
           <p className="mt-1 max-w-md text-sm text-slate-600">
             {hasil.berstok > 0 && `${formatAngka(hasil.berstok)} barang tercatat dengan stok awal. `}
@@ -186,7 +186,7 @@ export default function ImporBarang() {
         <div className="space-y-6">
           <section className="kartu flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-3">
-              <FileSpreadsheet className="h-8 w-8 shrink-0 text-emerald-700" aria-hidden="true" />
+              <FileSpreadsheet className="h-8 w-8 shrink-0 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
               <div className="min-w-0">
                 <p className="truncate font-medium text-slate-900">{namaFile}</p>
                 <p className="text-sm text-slate-600">
@@ -249,7 +249,7 @@ export default function ImporBarang() {
                 {TAB.map((t) => (
                   <button key={t.kunci} type="button" role="tab" aria-selected={tab === t.kunci} onClick={() => setTab(t.kunci)}
                     className={`min-h-11 rounded-lg px-3 text-sm font-medium ${
-                      tab === t.kunci ? 'bg-primer-700 text-white' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                      tab === t.kunci ? 'pilihan-aktif' : 'pilihan-pasif'
                     }`}>
                     {t.label} ({formatAngka(jumlah[t.kunci])})
                   </button>
@@ -319,8 +319,8 @@ function DaftarBaris({ baris, tab, kodeIkut }) {
                   {b.stok > 0 && <span>Stok {formatAngka(b.stok)}</span>}
                   {dilewati && <span>Kategori tidak dicentang</span>}
                 </div>
-                {b.galat.length > 0 && <p className="mt-1 text-red-700">{b.galat.join('. ')}.</p>}
-                {b.catatan.length > 0 && <p className="mt-1 text-amber-800">{b.catatan.join('. ')}.</p>}
+                {b.galat.length > 0 && <p className="mt-1 text-red-700 dark:text-red-400">{b.galat.join('. ')}.</p>}
+                {b.catatan.length > 0 && <p className="mt-1 text-amber-800 dark:text-amber-200">{b.catatan.join('. ')}.</p>}
               </div>
             </li>
           )

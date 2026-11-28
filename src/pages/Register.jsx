@@ -76,7 +76,7 @@ export default function Register() {
     <AuthShell judul="Daftar akun pegawai" keterangan="Akun bisa dipakai setelah diverifikasi Admin.">
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {errorServer && (
-          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700" role="alert">
+          <p className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2.5 text-sm text-red-700 dark:text-red-400" role="alert">
             {errorServer}
           </p>
         )}

@@ -22,7 +22,7 @@ export default function MenungguVerifikasi() {
   return (
     <AuthShell judul="Akun menunggu verifikasi">
       {errorProfil ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{errorProfil}</p>
+        <p className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 px-3 py-2.5 text-sm text-red-700 dark:text-red-400">{errorProfil}</p>
       ) : (
         <div className="kartu p-5">
           <div className="flex gap-3">

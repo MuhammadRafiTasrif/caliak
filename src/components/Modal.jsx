@@ -30,7 +30,7 @@ export default function Modal({ terbuka, onTutup, judul, keterangan, children, l
         tutup()
       }}
       onClick={(e) => tutupDiLuar && e.target === ref.current && tutup()}
-      className={`w-[calc(100%-2rem)] ${lebar} max-h-[calc(100dvh-2rem)] rounded-xl bg-white p-0 text-slate-800 shadow-xl backdrop:bg-slate-900/50`}
+      className={`w-[calc(100%-2rem)] ${lebar} max-h-[calc(100dvh-2rem)] rounded-xl bg-permukaan p-0 text-slate-800 shadow-xl backdrop:bg-black/60`}
     >
       {terbuka && (
         <div className="p-5 sm:p-6">

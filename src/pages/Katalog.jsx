@@ -131,11 +131,11 @@ export default function Katalog() {
         <div className={`fixed inset-x-0 z-20 px-4 sm:px-6 ${
           isAdmin ? 'bottom-4 lg:pl-[calc(18rem+2.5rem)] lg:pr-10' : 'bottom-[calc(4.5rem+env(safe-area-inset-bottom))] md:bottom-4'
         }`}>
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-xl bg-primer-800 px-4 py-3 text-white shadow-lg" data-gelap>
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 rounded-xl latar-merek-datar px-4 py-3 text-white shadow-lg" data-gelap>
             <p className="text-sm">
               <strong>{jumlahDipilih} barang</strong> dipilih
             </p>
-            <Link to="/permintaan/baru" className="btn bg-white text-primer-800 hover:bg-primer-50">
+            <Link to="/permintaan/baru" className="btn bg-white text-fuchsia-800 hover:bg-fuchsia-50">
               Lanjut ajukan
             </Link>
           </div>

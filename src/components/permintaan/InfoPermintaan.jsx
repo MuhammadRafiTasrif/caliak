@@ -67,7 +67,7 @@ export function RincianBarang({ rincian }) {
           <div className="text-right tabular-nums">
             <p className="text-slate-700">Diminta {formatAngka(r.jumlah_diminta)} {r.barang?.satuan}</p>
             {adaPersetujuan && (
-              <p className={r.jumlah_disetujui < r.jumlah_diminta ? 'font-semibold text-amber-900' : 'font-semibold text-slate-900'}>
+              <p className={r.jumlah_disetujui < r.jumlah_diminta ? 'font-semibold text-amber-900 dark:text-amber-200' : 'font-semibold text-slate-900'}>
                 Disetujui {formatAngka(r.jumlah_disetujui ?? 0)} {r.barang?.satuan}
               </p>
             )}

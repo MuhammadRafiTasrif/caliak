@@ -6,7 +6,7 @@ export default function Brand({ terang = false, tagline = true }) {
     <div className="flex items-center gap-3">
       <span
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-          terang ? 'bg-white/10 text-white' : 'bg-primer-700 text-white'
+          terang ? 'bg-white/10 text-white' : 'latar-merek-datar text-white'
         }`}
       >
         <PackageSearch className="h-5 w-5" aria-hidden="true" />
@@ -16,7 +16,7 @@ export default function Brand({ terang = false, tagline = true }) {
           CALIAK
         </p>
         {tagline && (
-          <p className={`text-[11px] leading-snug ${terang ? 'text-primer-100' : 'text-slate-600'}`}>
+          <p className={`text-[11px] leading-snug ${terang ? 'text-white/90' : 'text-slate-600'}`}>
             Catatan Logistik Akurat dan Informasi Ketersediaan
           </p>
         )}

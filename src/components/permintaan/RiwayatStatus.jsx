@@ -22,7 +22,7 @@ export default function RiwayatStatus({ requestId, pemohonId }) {
     }
   }, [requestId])
 
-  if (error) return <p className="text-sm text-red-700">Riwayat status gagal dimuat: {error}</p>
+  if (error) return <p className="text-sm text-red-700 dark:text-red-400">Riwayat status gagal dimuat: {error}</p>
   if (!log) {
     return (
       <p className="flex items-center gap-2 text-sm text-slate-600">

@@ -68,15 +68,15 @@ export default function Dashboard() {
       {/* Fokus utama: antrean yang menunggu tindakan admin. */}
       <section className="grid gap-4 md:grid-cols-2" aria-label="Antrean tindakan">
         <Link to="/admin/persetujuan" data-gelap
-          className="group flex items-center justify-between gap-4 rounded-xl bg-primer-800 p-5 text-white hover:bg-primer-900">
+          className="group flex items-center justify-between gap-4 rounded-xl latar-merek-datar p-5 text-white hover:brightness-110">
           <div>
-            <p className="text-sm text-primer-100">Permintaan menunggu persetujuan</p>
+            <p className="text-sm text-white/90">Permintaan menunggu persetujuan</p>
             <p className="mt-1 text-4xl font-bold tabular-nums">{formatAngka(ringkasan.menunggu)}</p>
             <p className="mt-2 text-sm font-medium group-hover:underline">
               {ringkasan.menunggu > 0 ? 'Periksa sekarang' : 'Tidak ada antrean'}
             </p>
           </div>
-          <ClipboardCheck className="h-10 w-10 shrink-0 text-primer-200" aria-hidden="true" />
+          <ClipboardCheck className="h-10 w-10 shrink-0 text-white/80" aria-hidden="true" />
         </Link>
         <Link to="/admin/persetujuan?status=disetujui"
           className="kartu group flex items-center justify-between gap-4 p-5 hover:border-primer-200">
@@ -143,7 +143,7 @@ export default function Dashboard() {
                     <KodeBarang kode={b.kode_unik} />
                   </div>
                   <p className="shrink-0 text-right tabular-nums">
-                    <span className={`font-semibold ${b.stok === 0 ? 'text-red-700' : 'text-amber-900'}`}>
+                    <span className={`font-semibold ${b.stok === 0 ? 'text-red-700 dark:text-red-400' : 'text-amber-900 dark:text-amber-200'}`}>
                       {formatAngka(b.stok)} {b.satuan}
                     </span>
                     <span className="block text-xs text-slate-600">min. {formatAngka(b.stok_minimum)}</span>
@@ -162,7 +162,7 @@ function Angka({ label, nilai, ke, tautan, peringatan = false }) {
   return (
     <Link to={ke} className="kartu group flex flex-col p-3 hover:border-primer-200 sm:p-4">
       <p className="text-xs text-slate-600 sm:text-sm">{label}</p>
-      <p className={`mt-1 text-2xl font-bold tabular-nums ${peringatan ? 'text-amber-900' : 'text-slate-900'}`}>{formatAngka(nilai)}</p>
+      <p className={`mt-1 text-2xl font-bold tabular-nums ${peringatan ? 'text-amber-900 dark:text-amber-200' : 'text-slate-900'}`}>{formatAngka(nilai)}</p>
       {/* Di HP tautan disembunyikan: seluruh kartu sudah bisa diklik. */}
       <p className="mt-auto hidden pt-1 text-sm font-medium text-primer-700 group-hover:underline sm:block">{tautan}</p>
     </Link>

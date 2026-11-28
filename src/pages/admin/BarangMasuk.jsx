@@ -207,7 +207,7 @@ export default function BarangMasuk() {
                       <p className="font-medium text-slate-900">{m.barang?.nama}</p>
                       <p className="text-sm text-slate-600">{formatTanggal(m.tanggal)}{m.dokumen_ref ? `, ${m.dokumen_ref}` : ''}</p>
                     </div>
-                    <p className="shrink-0 font-semibold tabular-nums text-emerald-700">
+                    <p className="shrink-0 font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                       +{formatAngka(m.jumlah)} {m.barang?.satuan}
                     </p>
                   </div>
@@ -298,7 +298,7 @@ function PilihBarang({ error, onPilih, onTambahBaru }) {
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Mencari barang...
             </p>
           ) : gagal ? (
-            <p className="px-3 py-3 text-sm text-red-700">Pencarian gagal: {gagal}</p>
+            <p className="px-3 py-3 text-sm text-red-700 dark:text-red-400">Pencarian gagal: {gagal}</p>
           ) : hasil.length === 0 ? (
             <p className="px-3 py-3 text-sm text-slate-600">
               Tidak ada barang aktif dengan nama atau kode &ldquo;{cariTertunda}&rdquo;.

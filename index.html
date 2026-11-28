@@ -12,6 +12,13 @@
       rel="stylesheet"
     />
     <title>CALIAK</title>
+    <script>
+      // Pasang tema yang tersimpan sebelum halaman tergambar, agar mode gelap
+      // tidak berkedip putih saat dibuka. Bawaan: tema terang.
+      try {
+        if (localStorage.getItem('caliak-tema') === 'gelap') document.documentElement.classList.add('dark')
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

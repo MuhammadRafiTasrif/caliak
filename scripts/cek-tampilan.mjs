@@ -6,6 +6,7 @@
 // Pemakaian (dev server harus sudah jalan):
 //   node scripts/cek-tampilan.mjs /login /daftar
 // Untuk halaman yang butuh login, isi CALIAK_EMAIL dan CALIAK_PASSWORD.
+// Untuk tema gelap, isi CALIAK_TEMA=gelap.
 
 import { chromium } from 'playwright'
 
@@ -15,6 +16,10 @@ if (halaman.length === 0) halaman.push('/login')
 
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 390, height: 844 } })
+// CALIAK_TEMA=gelap memeriksa halaman dalam tema gelap.
+if (process.env.CALIAK_TEMA) {
+  await page.addInitScript((t) => localStorage.setItem('caliak-tema', t), process.env.CALIAK_TEMA)
+}
 let gagal = 0
 
 if (process.env.CALIAK_EMAIL) {

@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { usePermintaan } from '../context/PermintaanContext'
 import Brand from './Brand'
+import TombolTema from './TombolTema'
 
 const MENU_ADMIN = [
   { ke: '/admin', label: 'Dashboard', ikon: LayoutDashboard, persis: true },
@@ -45,7 +46,7 @@ function AngkaBadge({ jenis, className = '' }) {
   const angka = usePermintaan()[jenis] ?? 0
   if (!jenis || angka === 0) return null
   return (
-    <span className={`inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-bold leading-5 text-slate-900 ${className}`}>
+    <span className={`inline-flex min-w-5 items-center justify-center rounded-full bg-cyan-400 px-1.5 text-[11px] font-bold leading-5 text-cyan-950 ${className}`}>
       {angka > 99 ? '99+' : angka}
       <span className="sr-only"> {KETERANGAN_BADGE[jenis]}</span>
     </span>
@@ -87,7 +88,7 @@ function LayoutAdmin() {
     <div className="min-h-screen lg:flex">
       <header
         data-gelap
-        className="sticky top-0 z-30 flex items-center justify-between gap-3 bg-primer-800 px-4 py-2 lg:hidden"
+        className="sticky top-0 z-30 flex items-center justify-between gap-3 latar-merek-datar px-4 py-2 lg:hidden"
       >
         <Brand terang tagline={false} />
         <button
@@ -103,14 +104,14 @@ function LayoutAdmin() {
       </header>
 
       {laciTerbuka && (
-        <div className="fixed inset-0 z-40 bg-slate-900/50 lg:hidden" onClick={() => setLaciTerbuka(false)} />
+        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setLaciTerbuka(false)} />
       )}
 
       {/* Saat laci tertutup di HP, `invisible` mencegah tautannya terjangkau tombol Tab. */}
       <aside
         id="sidebar-admin"
         data-gelap
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col bg-primer-800 transition-transform lg:visible lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] flex-col latar-merek transition-transform lg:visible lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
           laciTerbuka ? 'visible translate-x-0' : 'invisible -translate-x-full'
         }`}
       >
@@ -119,7 +120,7 @@ function LayoutAdmin() {
           <button
             type="button"
             onClick={() => setLaciTerbuka(false)}
-            className="-mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-primer-100 hover:bg-white/10 lg:hidden"
+            className="-mr-2 -mt-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white/90 hover:bg-white/10 lg:hidden"
             aria-label="Tutup menu"
           >
             <X className="h-5 w-5" />
@@ -144,7 +145,7 @@ function LayoutAdmin() {
 function GrupMenu({ judul, menu }) {
   return (
     <div>
-      <p className="mb-2 px-3 text-xs font-medium text-primer-200">{judul}</p>
+      <p className="mb-2 px-3 text-xs font-medium text-white/90">{judul}</p>
       <ul className="space-y-1">
         {menu.map((m) => (
           <li key={m.ke}>
@@ -153,7 +154,7 @@ function GrupMenu({ judul, menu }) {
               end={m.persis}
               className={({ isActive }) =>
                 `flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors ${
-                  isActive ? 'bg-white text-primer-800' : 'text-primer-50 hover:bg-white/10'
+                  isActive ? 'bg-white text-fuchsia-800 dark:bg-white/15 dark:text-white' : 'text-white hover:bg-white/10'
                 }`
               }
             >
@@ -174,11 +175,14 @@ function KakiSidebar() {
   return (
     <div className="border-t border-white/10 px-5 py-4">
       <p className="truncate text-sm font-semibold text-white">{profile?.nama}</p>
-      <p className="truncate text-xs text-primer-200">Admin, {profile?.unit_kerja || 'unit kerja belum diisi'}</p>
+      <p className="truncate text-xs text-white/90">Admin, {profile?.unit_kerja || 'unit kerja belum diisi'}</p>
+      <div className="mt-3">
+        <TombolTema varian="sidebar" />
+      </div>
       <button
         type="button"
         onClick={keluar}
-        className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-white/30 px-3 text-sm font-medium text-white hover:bg-white/10"
+        className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-white/30 px-3 text-sm font-medium text-white hover:bg-white/10"
       >
         <LogOut className="h-4 w-4" aria-hidden="true" />
         Keluar
@@ -194,7 +198,7 @@ function LayoutPemohon() {
 
   return (
     <div className="min-h-screen pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
-      <header data-gelap className="sticky top-0 z-30 bg-primer-800">
+      <header data-gelap className="sticky top-0 z-30 latar-merek-datar">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-2 sm:px-6">
           <Brand terang />
 
@@ -205,7 +209,7 @@ function LayoutPemohon() {
                 to={m.ke}
                 className={({ isActive }) =>
                   `flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium ${
-                    isActive ? 'bg-white text-primer-800' : 'text-primer-50 hover:bg-white/10'
+                    isActive ? 'bg-white text-fuchsia-800 dark:bg-white/15 dark:text-white' : 'text-white hover:bg-white/10'
                   }`
                 }
               >
@@ -218,12 +222,13 @@ function LayoutPemohon() {
           <div className="flex items-center gap-2">
             <div className="hidden text-right lg:block">
               <p className="max-w-[180px] truncate text-sm font-semibold text-white">{profile?.nama}</p>
-              <p className="max-w-[180px] truncate text-xs text-primer-200">{profile?.unit_kerja || 'Pemohon'}</p>
+              <p className="max-w-[180px] truncate text-xs text-white/90">{profile?.unit_kerja || 'Pemohon'}</p>
             </div>
+            <TombolTema varian="ikon" />
             <button
               type="button"
               onClick={keluar}
-              className="flex h-11 w-11 items-center justify-center rounded-lg text-primer-50 hover:bg-white/10"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-white hover:bg-white/10"
               aria-label="Keluar"
               title="Keluar"
             >
@@ -237,7 +242,7 @@ function LayoutPemohon() {
         <Outlet />
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-3 border-t border-slate-200 bg-permukaan pb-[env(safe-area-inset-bottom)] md:hidden">
         {MENU_PEMOHON.map((m) => (
           <NavLink
             key={m.ke}

@@ -48,10 +48,10 @@ export function StokBarang({ barang }) {
         {formatAngka(barang.stok)} {barang.satuan}
       </span>
       {kondisi === 'habis' && (
-        <span className="rounded bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700">Stok habis</span>
+        <span className="rounded bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-400">Stok habis</span>
       )}
       {kondisi === 'menipis' && (
-        <span className="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+        <span className="rounded bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
           Menipis (min. {formatAngka(barang.stok_minimum)})
         </span>
       )}

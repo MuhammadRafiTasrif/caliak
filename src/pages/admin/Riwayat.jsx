@@ -35,7 +35,7 @@ export default function Riwayat() {
         ].map(([kunci, label]) => (
           <button key={kunci} type="button" role="tab" aria-selected={tab === kunci} onClick={() => setTab(kunci)}
             className={`min-h-11 rounded-lg px-4 text-sm font-medium ${
-              tab === kunci ? 'bg-primer-700 text-white' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              tab === kunci ? 'pilihan-aktif' : 'pilihan-pasif'
             }`}>
             {label}
           </button>
@@ -281,7 +281,7 @@ function TabMutasi() {
 function Jumlah({ m }) {
   const positif = m.jumlah > 0
   return (
-    <span className={`shrink-0 font-semibold tabular-nums ${positif ? 'text-emerald-700' : 'text-red-700'}`}>
+    <span className={`shrink-0 font-semibold tabular-nums ${positif ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}>
       {positif ? '+' : ''}
       {formatAngka(m.jumlah)} {m.barang?.satuan}
     </span>

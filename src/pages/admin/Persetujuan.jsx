@@ -76,7 +76,7 @@ export default function Persetujuan() {
         {FILTER_STATUS.map((s) => (
           <button key={s || 'semua'} type="button" role="tab" aria-selected={status === s} onClick={() => setStatus(s)}
             className={`min-h-11 rounded-lg px-3 text-sm font-medium ${
-              status === s ? 'bg-primer-700 text-white' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              status === s ? 'pilihan-aktif' : 'pilihan-pasif'
             }`}>
             {s ? LABEL_STATUS[s] : 'Semua'}
             {s === 'menunggu' && menunggu > 0 && ` (${formatAngka(menunggu)})`}
@@ -253,7 +253,7 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
     <>
       <Modal terbuka onTutup={onTutup} judul={p ? `Permintaan ${p.nomor}` : 'Permintaan'} lebar="max-w-3xl" terkunci={memproses}>
         {error ? (
-          <p className="text-sm text-red-700">Permintaan gagal dimuat: {error}</p>
+          <p className="text-sm text-red-700 dark:text-red-400">Permintaan gagal dimuat: {error}</p>
         ) : !p ? (
           <Loading teks="Memuat detail permintaan..." />
         ) : (
@@ -271,7 +271,7 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
                         <div className="mt-1 flex flex-wrap items-center gap-2 text-slate-600">
                           {r.barang && <KodeBarang kode={r.barang.kode_unik} />}
                           <span>Diminta {formatAngka(r.jumlah_diminta)}</span>
-                          <span className={(r.barang?.stok ?? 0) < r.jumlah_diminta ? 'font-medium text-amber-900' : ''}>
+                          <span className={(r.barang?.stok ?? 0) < r.jumlah_diminta ? 'font-medium text-amber-900 dark:text-amber-200' : ''}>
                             Stok {formatAngka(r.barang?.stok ?? 0)} {r.barang?.satuan}
                           </span>
                         </div>
@@ -305,7 +305,7 @@ function DetailPersetujuan({ id, onTutup, onSelesai }) {
                     placeholder="Contoh: ambil di ruang Subbagian Umum" />
                 </div>
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                  <button type="button" className="btn-sekunder text-red-700" onClick={() => setAksi('tolak')}>
+                  <button type="button" className="btn-sekunder text-red-700 dark:text-red-400" onClick={() => setAksi('tolak')}>
                     Tolak permintaan
                   </button>
                   <button type="button" className="btn-primer" onClick={() => setAksi('setujui')} disabled={!bisaSetujui}>

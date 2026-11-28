@@ -120,7 +120,7 @@ export default function KelolaPengguna() {
         {TAB.map(([kunci, label]) => (
           <button key={kunci || 'semua'} type="button" role="tab" aria-selected={status === kunci} onClick={() => setStatus(kunci)}
             className={`min-h-11 rounded-lg px-3 text-sm font-medium ${
-              status === kunci ? 'bg-primer-700 text-white' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              status === kunci ? 'pilihan-aktif' : 'pilihan-pasif'
             }`}>
             {label}
           </button>
@@ -160,7 +160,7 @@ export default function KelolaPengguna() {
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold text-slate-900">{p.nama}</p>
                     {p.role === 'admin' && <span className="rounded bg-primer-100 px-1.5 py-0.5 text-xs font-medium text-primer-800">Admin</span>}
-                    {!p.is_verified && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-900">Belum diverifikasi</span>}
+                    {!p.is_verified && <span className="rounded bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 text-xs font-medium text-amber-900 dark:text-amber-200">Belum diverifikasi</span>}
                     {p.id === user.id && <span className="text-xs text-slate-600">(akun Anda)</span>}
                   </div>
                   <p className="mt-0.5 break-all text-slate-700">{p.email ?? '-'}</p>
@@ -188,7 +188,7 @@ export default function KelolaPengguna() {
                             Jadikan admin
                           </button>
                         )}
-                        <button type="button" className="btn-sekunder text-red-700" onClick={() => setAksi({ jenis: 'cabut', pengguna: p })}>
+                        <button type="button" className="btn-sekunder text-red-700 dark:text-red-400" onClick={() => setAksi({ jenis: 'cabut', pengguna: p })}>
                           Cabut verifikasi
                         </button>
                       </>
